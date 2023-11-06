@@ -1,0 +1,2 @@
+class FailedDomainKey(ValueError):
+    pass
