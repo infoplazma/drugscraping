@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from core.utilities import add_tail
 
 
-def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) -> Tuple[str, str]:
+def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) -> List[Tuple[str, str]]:
     """
 
     :param domain_url:
@@ -16,9 +16,11 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
     :param source_page_dir:
     :type source_page_dir:
     :param drug_list:
+
+    return: list of refused_url in format list[(drug, url)]
     """
 
-    refused_url = list()
+    refused_url: List[Tuple[str, str]] = list()
 
     if not os.path.isdir(source_page_dir):
         os.mkdir(source_page_dir)

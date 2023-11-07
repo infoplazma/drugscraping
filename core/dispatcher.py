@@ -21,7 +21,7 @@ def scrape_dispatcher(domain_key: str, task_file_path: str):
 
         refused_url = scrape_fun(domain_url=DOMAINS[domain_key], source_page_dir=source_page_dir, drug_list=drug_list)
         domain_log_dir = make_dir_in_log_dir(domain_key.lower())
-        log_file_path = os.path.join(domain_log_dir, domain_key.lower() + "_refused_url.log")
+        log_file_path = os.path.join(domain_log_dir, domain_key.lower() + "_scraped_refused_url.log")
         save_refused_url(log_file_path, refused_url)
     else:
         raise FailedDomainKey(f'Not found key \'{domain_key}\' in {SCRAPE_FUN_DICT.keys()}')
