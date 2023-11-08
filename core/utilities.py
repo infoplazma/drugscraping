@@ -1,11 +1,17 @@
 import os
-from typing import Tuple, List, Dict
+import re
+from typing import Tuple, List, Dict, TypeAlias
 
 import pandas as pd
 from colorama import Fore, Style
+from tqdm import tqdm
 
 from settings import HTML_DATA_DIR, LOG_DIR
 from settings import CUSTOM_DRUG_TAG, CUSTOM_PRODUCT_NAME_TAG, CUSTOM_URL_TAG
+from settings import URL_COLUMN
+
+STANDARD_SHEET: str = r"\w"
+DFS_TYPE: TypeAlias = Dict[str, pd.DataFrame]
 
 
 def add_tail(drug: str, product_name: str, url: str) -> str:
@@ -14,11 +20,11 @@ def add_tail(drug: str, product_name: str, url: str) -> str:
            f"<{CUSTOM_URL_TAG}>{url}</{CUSTOM_URL_TAG}>"
 
 
-def save_refused_url(path: str, refused_url: Tuple[str, ...]) -> None:
+def save_log(path: str, log_list: List[Tuple[str, ...]], sep=' | ') -> None:
     with open(path, 'w', encoding="utf-8") as fp:
-        for data in refused_url:
+        for data in log_list:
             # write each data on a new line
-            fp.write(",  ".join(data) + "\n")
+            fp.write(sep.join(map(str, data)) + "\n")
 
 
 def read_task(path: str) -> List[str]:
@@ -76,3 +82,52 @@ def is_open_file(path: str) -> bool:
         print(Fore.RED + Style.BRIGHT + f"Please close file! '{path}'", end='')
         print(Style.RESET_ALL)
         return True
+
+
+def read_excel(file_path: str, disable_tqdm=True, desc_tqdm='files') -> DFS_TYPE:
+    dfs: Dict[str, pd.DataFrame] = dict()
+    file = os.path.basename(file_path)
+    if not str(file).startswith("~$") and (str(file).endswith(".xls") or str(file).endswith(".xlsx")):
+        xl = pd.ExcelFile(file_path)
+        for sheet_name in tqdm(xl.sheet_names, desc=desc_tqdm, ncols=100, disable=disable_tqdm):
+            if re.match(STANDARD_SHEET, sheet_name):
+                dfs[sheet_name] = pd.read_excel(file_path, sheet_name=sheet_name)
+    return dfs
+
+
+def read_excel_package(dir_path: str, disable_tqdm=True, desc_tqdm='files') -> DFS_TYPE:
+    dfs: Dict[str, pd.DataFrame] = dict()
+    path_list = get_excel_path_list(dir_path)
+    for path in path_list:
+        new_dfs = read_excel(path, disable_tqdm, desc_tqdm)
+        if intersection := set(dfs.keys()).intersection(set(new_dfs.keys())):
+            raise ValueError(f"Пересечения названий Excel листов: {intersection=}")
+        dfs.update(new_dfs)
+    return dfs
+
+
+def get_excel_path_list(dir_path: str) -> List[str]:
+    file_list: List[str] = list()
+    for root, _, dir_files in os.walk(dir_path):
+        for file in dir_files:
+            if not str(file).startswith("~$") and (str(file).endswith(".xls") or str(file).endswith(".xlsx")):
+                path = os.path.abspath(os.path.join(root, file))
+                file_list.append(path)
+
+    return file_list
+
+
+def reset_column_positions(df: pd.DataFrame, position_pattern: List[str]) -> pd.DataFrame:
+    """
+    Устанавливает порядок следования колонок по образцу position_pattern
+    Последние две колонки из position_pattern устанавливает последними в df.
+    """
+    new_columns = [col for col in df.columns.tolist() if col in position_pattern]
+    new_columns.remove(URL_COLUMN)
+    new_columns.append(URL_COLUMN)
+    return df[new_columns]
+
+
+def check_column_names_in_df(df: pd.DataFrame, required_column_names: List[str]):
+    if not set(required_column_names).issubset(set(df.columns.tolist())):
+        raise ValueError(f"Not found required columns {set(required_column_names).difference(set(df.columns.tolist()))}")

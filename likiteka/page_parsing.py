@@ -1,9 +1,12 @@
+"""
+Парсинг html файлов дял домена likiteka
+"""
 import os
 import re
 from typing import Tuple, List, Dict
 from collections import namedtuple
 
-from settings import CUSTOM_DRUG_TAG, CUSTOM_URL_TAG
+from settings import CUSTOM_DRUG_TAG, CUSTOM_URL_TAG, SIMPLY_RELEASE_FORM_COLUMN, COMPOSITION_COLUMN, TRADE_NAME_COLUMN
 from settings import DRUG_COLUMN, PRODUCT_NAME_COLUMN, RELEASE_FORM_COLUMN, SYMPTOM_COLUMN
 from settings import ACTIVE_INGREDIENTS_COLUMN, CHILDREN_COLUMN, URL_COLUMN
 
@@ -85,11 +88,13 @@ def parse_pages(source_page_dir: str, disable_tqdm=False) -> Tuple[pd.DataFrame,
                     refused_url.append((drug, url, 'Діюча речовина', 'AttributeError'))
 
                 # Заполняем словарь
-                record = {SYMPTOM_COLUMN: np.nan,
-                          DRUG_COLUMN: drug,
+                record = {DRUG_COLUMN: drug,
                           PRODUCT_NAME_COLUMN: product_name,
-                          RELEASE_FORM_COLUMN: release_form,
+                          TRADE_NAME_COLUMN: product_name,
                           ACTIVE_INGREDIENTS_COLUMN: active_ingredients,
+                          SIMPLY_RELEASE_FORM_COLUMN: release_form,
+                          RELEASE_FORM_COLUMN: release_form,
+                          COMPOSITION_COLUMN: np.nan,
                           CHILDREN_COLUMN: np.nan,
                           URL_COLUMN: url}
 
@@ -97,11 +102,6 @@ def parse_pages(source_page_dir: str, disable_tqdm=False) -> Tuple[pd.DataFrame,
                 record_list.append(record)
 
     df = pd.DataFrame(record_list)
-    tolist = df.columns.tolist()
-    tolist.remove(URL_COLUMN)
-    tolist.append(URL_COLUMN)
-    df = df[tolist]
-
     return df, refused_url
 
 

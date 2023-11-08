@@ -2,7 +2,7 @@
 import os
 from enum import Enum
 
-from configs.init_conf import REQUIRED_COLUMN_NAMES as REQUIRED_COLUMN_NAMES_CONF
+from configs.init_conf import REQUIRED_COLUMN_NAMES, CONTENT_COLUMN
 
 
 class DomainKeys(Enum):
@@ -37,8 +37,9 @@ DOMAINS = {
     DomainKeys.APTEKA911.name: 'https://apteka911.ua/ua',
     DomainKeys.TABLETKIUA.name: 'https://tabletki.ua/'}
 
-# Обязательные имена колонок в excel файлах
-REQUIRED_COLUMN_NAMES = REQUIRED_COLUMN_NAMES_CONF
+
+# Имена колонок в excel файлах
+COLUMN_NAMES = list(REQUIRED_COLUMN_NAMES) + list(CONTENT_COLUMN)
 
 IS_ADDED_COLUMNS = True
 DRUG_COLUMN = 'drug'
