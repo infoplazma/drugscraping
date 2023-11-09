@@ -1,5 +1,5 @@
 """
-Оценка схожести выражений
+Оценка схожести выражений на основе пакета spacy
 """
 import re
 from typing import Tuple, List, Literal
@@ -11,9 +11,20 @@ from tqdm import tqdm
 # ic.configureOutput(includeContext=True)
 
 
-def evaluate_similarity(list1: List[str], list2: List[str],
-                        threshold: float = 0.0,
-                        model: Literal['sm', 'md', 'lg'] = 'lg') -> List[Tuple[str, str, float]]:
+def evaluate_2_similarity_lists(list1: List[str], list2: List[str],
+                                threshold: float = 0.0,
+                                model: Literal['sm', 'md', 'lg'] = 'lg') -> List[Tuple[str, str, float]]:
+    """
+    Оценка схожести между всеми компонентами двух массивов
+
+    :param list1:
+    :param list2:
+    :param threshold: порог фильтрации
+    :param model: какую лингвинистическую модель использовать
+
+    :return: возвращает массив схожести между всеми элементами
+
+    """
 
     if not (0 <= threshold <= 1):
         raise ValueError(f"Invalid value {threshold=} must be 0 <= threshold <= 1")
@@ -40,12 +51,12 @@ def evaluate_similarity(list1: List[str], list2: List[str],
 
 def cleanup(string: str) -> str:
     string = re.sub(r"[\s\,\.\:\;]+", " ", string)
-    # string = re.sub(r"[иИ]", "ы", string)
     string = re.sub(r"[ІіїЇ]", "и", string)
     string = re.sub(r"[Єє]", "е", string)
     regex = re.compile(r"[^A-Za-zА-Яа-я0-9ІіЄєїЇ\s]+", flags=re.I)
     string = regex.sub('', string.lower().strip())
     return string
+
 #
 #
 # if __name__ == "__main__":

@@ -3,7 +3,7 @@
 """
 import os
 import re
-from typing import Tuple, List, Dict
+from typing import Tuple, List
 from collections import namedtuple
 
 from settings import CUSTOM_DRUG_TAG, CUSTOM_URL_TAG, SIMPLY_RELEASE_FORM_COLUMN, COMPOSITION_COLUMN, TRADE_NAME_COLUMN
