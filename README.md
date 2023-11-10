@@ -6,6 +6,11 @@
 []()
 []()
 
+Установка виртуального окружения
+```commandline
+python3.10 -m venv venv
+```
+
 ### requirements.txt 
 
 You have to select version for [undetected-chromedriver](https://pypi.org/project/undetected-chromedriver/)

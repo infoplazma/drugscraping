@@ -10,6 +10,7 @@ from settings import HTML_DATA_DIR, LOG_DIR
 from settings import CUSTOM_DRUG_TAG, CUSTOM_PRODUCT_NAME_TAG, CUSTOM_URL_TAG
 from settings import URL_COLUMN
 
+LOG_SEP = ' | '
 STANDARD_SHEET: str = r"\w"
 DFS_TYPE: TypeAlias = Dict[str, pd.DataFrame]
 
@@ -20,19 +21,27 @@ def add_tail(drug: str, product_name: str, url: str) -> str:
            f"<{CUSTOM_URL_TAG}>{url}</{CUSTOM_URL_TAG}>"
 
 
-def save_log(path: str, log_list: List[Tuple[str, ...]], sep=' | ') -> None:
+def save_log(path: str, log_list: List[Tuple[str, ...]]) -> None:
     with open(path, 'w', encoding="utf-8") as fp:
         for data in log_list:
             # write each data on a new line
-            fp.write(sep.join(map(str, data)) + "\n")
+            fp.write(LOG_SEP.join(map(str, data)) + "\n")
 
 
-def read_task(path: str) -> List[str]:
+def read_log(path: str) -> List[str]:
     with open(path, "r", encoding="utf-8") as file:
         # reading the file
         data = file.read()
         data_list = [item.strip() for item in data.split('\n')]
-        return [item.strip() for item in data_list if not item.startswith("#")]
+        return [item.strip() for item in data_list if item and not item.startswith("#")]
+
+
+def parse_log_lines(lines: List[str]) -> List[List[str]]:
+    return [line.split(LOG_SEP) for line in lines]
+
+
+def parse_log_file(path: str) -> List[Tuple[str, ...]]:
+    return parse_log_lines(lines=read_log(path))
 
 
 def make_dir_in_data_dir(dir_name: str) -> str:

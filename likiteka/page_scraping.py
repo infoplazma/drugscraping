@@ -15,7 +15,7 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
     :type domain_url:
     :param source_page_dir:
     :type source_page_dir:
-    :param drug_list:
+    :param drug_list:  - список препаратов для скрапинга
 
     return: list of refused_url in format list[(drug, url)]
     """
@@ -71,10 +71,10 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
 
 if __name__ == "__main__":
     from icecream import ic
-    from settings import DOMAINS, DEFAULT_TASK_FILE_PATH
-    from core.utilities import read_task
+    from settings import DOMAINS, TASK_FILE_PATH
+    from core.utilities import read_log
 
-    DRUG_LIST = read_task(DEFAULT_TASK_FILE_PATH)
+    DRUG_LIST = read_log(TASK_FILE_PATH)
     ic(DRUG_LIST)
 
     # scrape_pages(domain_url=LIKITEKA_DOMAIN, source_page_dir=LIKITEKA_SOURCE_DIR, drug_list=DRUG_LIST)

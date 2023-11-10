@@ -22,10 +22,11 @@ from tqdm import tqdm
 DataPage = namedtuple('DataPage', ['header', 'content'])
 
 
-def parse_pages(source_page_dir: str, disable_tqdm=False) -> Tuple[pd.DataFrame, List[Tuple[str, str]]]:
+def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) -> Tuple[pd.DataFrame, List[Tuple[str, str]]]:
     """
 
     :param source_page_dir:
+    :param drug_list: список препаратов для парсинга
     :param disable_tqdm:
 
     return: two tuple with two parameters:
@@ -47,13 +48,16 @@ def parse_pages(source_page_dir: str, disable_tqdm=False) -> Tuple[pd.DataFrame,
                 file_obj.close()
 
                 soup = BeautifulSoup(page_source, 'html5lib')
-                chapters = soup.findAll('div', attrs={'class': 'tablets-tabs__item tablets-tabs__item_active'})
-
                 drug = soup.find(CUSTOM_DRUG_TAG).text
-                url = soup.find(CUSTOM_URL_TAG).text
+                if drug not in drug_list:
+                    continue
+
+                chapters = soup.findAll('div', attrs={'class': 'tablets-tabs__item tablets-tabs__item_active'})
                 if chapters is None:
                     refused_url.append((drug, url))
                     continue
+
+                url = soup.find(CUSTOM_URL_TAG).text
 
                 # product_name
                 product_name = soup.find('div', attrs={'class': 'tablets-container'}).find('h1').text

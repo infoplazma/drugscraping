@@ -1,52 +1,110 @@
 """
 Оценка схожести выражений на основе пакета spacy
 """
+import os
 import re
 from typing import Tuple, List, Literal
 
 import spacy
-from tqdm import tqdm
+
+from core.utilities import LOG_SEP, parse_log_file
+
 # from icecream import ic
 
 # ic.configureOutput(includeContext=True)
 
+DESCRIPTION = """# Не определяемые выражения для форм выпуска препаратов в модели nlp пакета spacy-ru.
+# Разделитель " | "
+# Структура:
+#   Первое значение - оригинал выражения, не редактируемое, справочно.
+#   Второе значение - очищенная копия оригинала выражения, не редактируемое, справочно.
+#   Третье значение - regex pattern для очищенной копии выражения (Второе значение), значение редактируемое.
+#   Четвертое значение - заменитель, значение редактируемое.
+# 
+"""
 
-def evaluate_2_similarity_lists(list1: List[str], list2: List[str],
-                                threshold: float = 0.0,
-                                model: Literal['sm', 'md', 'lg'] = 'lg') -> List[Tuple[str, str, float]]:
+
+class Substitution:
     """
-    Оценка схожести между всеми компонентами двух массивов
-
-    :param list1:
-    :param list2:
-    :param threshold: порог фильтрации
-    :param model: какую лингвинистическую модель использовать
-
-    :return: возвращает массив схожести между всеми элементами
-
+    Класс производит подстановку не найденных выражений в модели spacy
     """
+    def __init__(self, sub_list: List[Tuple[str, ...]], min_len=4):
 
-    if not (0 <= threshold <= 1):
-        raise ValueError(f"Invalid value {threshold=} must be 0 <= threshold <= 1")
+        self.sub_list = [item for item in sub_list if len(item) >= min_len]
+        self.sub_list = sorted(self.sub_list, key=lambda item: item[1], reverse=True)
 
+        self.origin_list = [item[0] for item in self.sub_list]
+        self.cln_list = [item[1] for item in self.sub_list]
+        self.pattern_list = [item[2].strip() for item in self.sub_list]
+        self.replacement_list = [item[3] for item in self.sub_list]
+
+    def __call__(self, string: str, *args, **kwargs) -> str:
+        found = map(lambda p: p if bool(re.search(p, cleanup(string), flags=re.I)) else None, self.pattern_list)
+        if patterns := tuple(filter(lambda item: item is not None, found)):
+            index = self.pattern_list.index(patterns[0])
+            return self.replacement_list[index].strip()
+        return string
+
+
+def save_unrecognizable(path: str,
+                        string_list: List[str],
+                        nlp: spacy = None,
+                        model: Literal['sm', 'md', 'lg'] = 'lg') -> None:
+    """
+    Сохраняет в файле выражения форм выпуска препарата которые не распознаются объектом nlp пакета spacy-ru.
+    """
+    nlp = get_nlp(nlp, model)
+    mode = 'w'
+
+    if os.path.isfile(path):
+        lines = parse_log_file(path)
+        previous_sentence_list = [line[0] for line in lines]
+        string_list = list(set(string_list).difference(set(previous_sentence_list)))
+        if not string_list:
+            print("No new release forms found")
+            return
+
+        mode = 'a'
+
+    string_list = sorted(set(string_list))
+
+    _transform: list = lambda l: [l[0], '.*' + l[1].strip() + '.*', l[2]]
+    data = [LOG_SEP.join([sentence] + _transform([cleanup(sentence)] * 3)) for sentence in get_unrecognizable(string_list, nlp)]
+
+    if not data:
+        print("No new release forms found")
+        return
+
+    msg = f"{len(data)} new release forms appended"
+
+    if mode == 'a':
+        data = '\n' + '\n'.join(data)
+    elif mode == 'w':
+        data = DESCRIPTION + '\n'.join(data)
+
+    with open(path, mode, encoding='utf-8') as file:
+        file.write(data)
+
+    print(msg)
+    print(f"File saved '{os.path.abspath(path)}'")
+
+
+def get_nlp(nlp: spacy, model: Literal['sm', 'md', 'lg'] = 'lg') -> spacy:
+    if nlp is None:
+        model_error(model)
+        print(f"Loading nlp model...")
+        nlp = spacy.load(f'ru_core_news_{model}')
+    return nlp
+
+
+def get_unrecognizable(string_list: List[str], nlp: spacy = None, model: Literal['sm', 'md', 'lg'] = 'lg'):
+    nlp = get_nlp(nlp, model)
+    return [string for string in string_list if not nlp(cleanup(string)).vector.any()]
+
+
+def model_error(model: Literal['sm', 'md', 'lg']):
     if model not in ['sm', 'md', 'lg']:
         raise ValueError(f"Invalid value {model=} must be ['sm', 'md', 'lg']")
-
-    nlp = spacy.load(f'ru_core_news_{model}')
-
-    similarity_list: List[Tuple[str, str, float]] = list()
-    for item1 in tqdm(sorted(list1), ncols=100, desc='progress'):
-        doc1 = nlp(cleanup(item1))
-        for item2 in sorted(list2):
-            doc2 = nlp(cleanup(item2))
-            similarity = doc1.similarity(doc2)
-
-            # ic(cleanup(item1), cleanup(item2), similarity)
-
-            if similarity >= threshold:
-                similarity_list.append((item1.replace('\xa0', ' '), item2.replace('\xa0', ' '), similarity))
-
-    return similarity_list
 
 
 def cleanup(string: str) -> str:
@@ -56,9 +114,3 @@ def cleanup(string: str) -> str:
     regex = re.compile(r"[^A-Za-zА-Яа-я0-9ІіЄєїЇ\s]+", flags=re.I)
     string = regex.sub('', string.lower().strip())
     return string
-
-#
-#
-# if __name__ == "__main__":
-#     string = 'Супозиторії.'
-#     print(cleanup(string=string))
