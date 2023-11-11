@@ -5,9 +5,11 @@ import os
 import re
 from typing import Tuple, List, Literal
 
+from tqdm import tqdm
+
 import spacy
 
-from core.utilities import LOG_SEP, parse_log_file
+from core.utilities import LOG_SEP, parse_log_lines, read_log
 
 # from icecream import ic
 
@@ -57,7 +59,7 @@ def save_unrecognizable(path: str,
     mode = 'w'
 
     if os.path.isfile(path):
-        lines = parse_log_file(path)
+        lines = read_sub_list(path)
         previous_sentence_list = [line[0] for line in lines]
         string_list = list(set(string_list).difference(set(previous_sentence_list)))
         if not string_list:
@@ -97,9 +99,9 @@ def get_nlp(nlp: spacy, model: Literal['sm', 'md', 'lg'] = 'lg') -> spacy:
     return nlp
 
 
-def get_unrecognizable(string_list: List[str], nlp: spacy = None, model: Literal['sm', 'md', 'lg'] = 'lg'):
+def get_unrecognizable(string_list: List[str], nlp: spacy = None, model: Literal['sm', 'md', 'lg'] = 'lg') -> List[str]:
     nlp = get_nlp(nlp, model)
-    return [string for string in string_list if not nlp(cleanup(string)).vector.any()]
+    return sorted(list(set([string for string in tqdm(set(string_list), ncols=100, desc='get_unrecognizable') if not nlp(cleanup(string)).vector.any()])))
 
 
 def model_error(model: Literal['sm', 'md', 'lg']):
@@ -114,3 +116,7 @@ def cleanup(string: str) -> str:
     regex = re.compile(r"[^A-Za-zА-Яа-я0-9ІіЄєїЇ\s]+", flags=re.I)
     string = regex.sub('', string.lower().strip())
     return string
+
+
+def read_sub_list(path: str) -> List[Tuple[str, ...]]:
+    return parse_log_lines(lines=read_log(path))

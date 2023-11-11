@@ -40,10 +40,6 @@ def parse_log_lines(lines: List[str]) -> List[List[str]]:
     return [line.split(LOG_SEP) for line in lines]
 
 
-def parse_log_file(path: str) -> List[Tuple[str, ...]]:
-    return parse_log_lines(lines=read_log(path))
-
-
 def make_dir_in_data_dir(dir_name: str) -> str:
     dir_path = os.path.join(HTML_DATA_DIR, dir_name)
     os.makedirs(dir_path, exist_ok=True)

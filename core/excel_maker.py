@@ -35,9 +35,9 @@ class ExcelMaker:
         """
         Создает конечный файл со схемой лечения для препаратов из файла drug_task_path
 
-        :param df_parsed: - таблица с распарсенными данными из html файлов
-        :param threshold: порог фильтрации
-        :param model: какую лингвинистическую модель использовать
+        :param df_parsed: таблица с распарсенными данными из соскрепленных html файлов
+        :param threshold: порог фильтрации 0..1
+        :param model: какую лингвистическую модель использовать
         :param sub_list: массив подстановок для класса Substitution из модуля similarity
 
         :return: схему лечения в формате кортежа из двух параметров DataFrame и refused
@@ -107,20 +107,40 @@ class ExcelMaker:
 
         return custom_scheme, refused
 
-    def check_model(self, df_parsed: pd.DataFrame, model: Literal['sm', 'md', 'lg'] = 'lg') -> list:
+    def check_model(self, df_parsed: pd.DataFrame,
+                    sub_list: List[Tuple[str, ...]] = None,
+                    model: Literal['sm', 'md', 'lg'] = 'lg') -> Tuple[List[str], bool]:
         """
         Проверяет какие выражения форм выпуска препарата модель не знает, и возвращает их список.
+
+        :param df_parsed: таблица с распарсенными данными из соскрепленных html файлов
+        :param sub_list: массив подстановок для класса Substitution из модуля similarity
+        :param model: какую лингвистическую модель использовать
+
+        :return Список форм выпуска препаратов не распознаваемые spacy-ru и режим редактирования в булевом значении,
+        указывающий редактировать или нет файл содержащий список подстановок sub_list
         """
+        if sub_list is not None and sub_list:
+            edit_mode = True
+        else:
+            edit_mode = False
+
+        print(f"Edit mode :{edit_mode} - depends on the presence of the argument 'sub_list', method: check_model")
         self._check_load()
         self.nlp = get_nlp(self.nlp, model)
 
-        release_form_list = set(df_parsed[stt.RELEASE_FORM_COLUMN].values.tolist() + self.release_form_list)
-        return get_unrecognizable(release_form_list, nlp=self.nlp)
+        release_form_list = set(df_parsed[stt.RELEASE_FORM_COLUMN].unique().tolist() + self.release_form_list)
+
+        if sub_list is not None and sub_list:
+            self.substitution = Substitution(sub_list)
+            release_form_list = [self.substitution(release_form) for release_form in release_form_list]
+
+        return get_unrecognizable(release_form_list, nlp=self.nlp), edit_mode
 
     def load(self, task_dir_path: str, columns: Dict[str, str] = None):
         """
         Загружает и подготавливает развернутую совокупную таблицу задания схемы лечения со всех excel
-        файлов из общего каталога.
+        файлов из каталога tasks.
         По сути выполняет инициализацию основных атрибутов класса.
 
         :param task_dir_path: путь к директории где находятся файлы с заданными схемами лечения
@@ -158,7 +178,6 @@ class ExcelMaker:
         """
         Приводит до ума таблицу с заданием
 
-        :param columns: словарь для переименования имен колонок
         """
         def parse_row_item(text: str) -> List[str]:
             if isinstance(text, str):
