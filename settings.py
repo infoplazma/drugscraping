@@ -27,14 +27,15 @@ CONFIGS_DIR = os.path.join(BASE_DIR, 'configs')
 #
 # Индивидуальные папки для каждого домена внутри папки DATA_DIR
 HTML_DATA_DIR = os.path.join(DATA_DIR, 'html_source')
-EXCEL_DATA_DIR = os.path.join(DATA_DIR, 'excel_source')
+EXCEL_DATA_DIR = os.path.join(DATA_DIR, 'excel_target')
+TEMP_DATA_DIR = os.path.join(DATA_DIR, 'temp')
 #
 # Файл с перечнем имен препаратов для скрапинга и парсинга
 TASK_FILE_PATH = os.path.join(TASK_DIR, 'task.txt')
 #
 # Файл для хранения и загрузки списка подстановок выражений форм выпуска препарата,
 # которые не распознаются объектом nlp пакета spacy-ru. Описание формата и способ редактирование в заглавии файла.
-UNRECOGNIZABLE_FILE_PATH = os.path.join(DATA_DIR, 'unrecognizable.log')
+UNRECOGNIZABLE_FILE_PATH = os.path.join(DATA_DIR, 'unrecognizable.txt')
 
 
 # Добавляемые Таги в конце соскрапленого html файла для хранения значений drug, product_name, url.
@@ -51,8 +52,13 @@ DOMAINS = {
     DomainKeys.TABLETKIUA.name: 'https://tabletki.ua/'}
 
 
-# Имена колонок в excel файлах задаются в конфиг файле configs/init_conf.py для состыковки с базой данных.
+# Имена колонок в excel файлах задаются в конфиг файле configs/init_conf.py для последующей состыковки с базой данных.
 COLUMN_NAMES = list(REQUIRED_COLUMN_NAMES) + list(CONTENT_COLUMN)
+
+# Размер модели sm, md, lg
+SPACY_MODEL = 'lg'
+# Порог схожести
+RELEASE_FORM_THRESHOLD = 0.60
 
 # Генерируемые значения имен колонок, если присутствуют, значит сгенерированы утилитой make_init_conf.py
 IS_ADDED_COLUMNS = True

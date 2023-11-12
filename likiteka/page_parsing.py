@@ -38,7 +38,7 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
 
     record_list: List[dict] = list()
     for root, _, dir_files in os.walk(source_page_dir):
-        print(f"{root=}")
+        # print(f"{root=}")
         for file in tqdm(dir_files, desc='Files', ncols=100, disable=disable_tqdm):
             if not str(file).startswith("~$") and (str(file).endswith(".html") or str(file).endswith(".txt")):
 

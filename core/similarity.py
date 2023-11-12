@@ -3,6 +3,7 @@
 """
 import os
 import re
+from datetime import datetime
 from typing import Tuple, List, Literal
 
 from tqdm import tqdm
@@ -11,9 +12,8 @@ import spacy
 
 from core.utilities import LOG_SEP, parse_log_lines, read_log
 
-# from icecream import ic
-
-# ic.configureOutput(includeContext=True)
+from icecream import ic
+ic.configureOutput(includeContext=True)
 
 DESCRIPTION = """# Не определяемые выражения для форм выпуска препаратов в модели nlp пакета spacy-ru.
 # Разделитель " | "
@@ -28,11 +28,12 @@ DESCRIPTION = """# Не определяемые выражения для фо�
 
 class Substitution:
     """
-    Класс производит подстановку не найденных выражений в модели spacy
-    """
-    def __init__(self, sub_list: List[Tuple[str, ...]], min_len=4):
+    Класс производит подстановку не найденных выражений в модели spacy на их синонимы которые определены в модели spacy
 
-        self.sub_list = [item for item in sub_list if len(item) >= min_len]
+    """
+    def __init__(self, substitution_list: List[Tuple[str, ...]], min_len=4):
+
+        self.sub_list = [item for item in substitution_list if len(item) >= min_len]
         self.sub_list = sorted(self.sub_list, key=lambda item: item[1], reverse=True)
 
         self.origin_list = [item[0] for item in self.sub_list]
@@ -50,28 +51,26 @@ class Substitution:
 
 def save_unrecognizable(path: str,
                         string_list: List[str],
-                        nlp: spacy = None,
-                        model: Literal['sm', 'md', 'lg'] = 'lg') -> None:
+                        nlp: spacy = None) -> None:
     """
     Сохраняет в файле выражения форм выпуска препарата которые не распознаются объектом nlp пакета spacy-ru.
     """
-    nlp = get_nlp(nlp, model)
     mode = 'w'
 
+    # Исключаем повторения при записи
     if os.path.isfile(path):
-        lines = read_sub_list(path)
-        previous_sentence_list = [line[0] for line in lines]
-        string_list = list(set(string_list).difference(set(previous_sentence_list)))
+        lines = read_substitution_list(path)
+        previous_sentence_list = set([line[0] for line in lines] + [line[3] for line in lines])
+        string_list = list(set(string_list).difference(previous_sentence_list))
         if not string_list:
-            print("No new release forms found")
+            print("No new release forms found to save")
             return
-
         mode = 'a'
 
     string_list = sorted(set(string_list))
-
-    _transform: list = lambda l: [l[0], '.*' + l[1].strip() + '.*', l[2]]
-    data = [LOG_SEP.join([sentence] + _transform([cleanup(sentence)] * 3)) for sentence in get_unrecognizable(string_list, nlp)]
+    data = [LOG_SEP.join([sentence, cleanup(sentence), '.*' + cleanup(sentence).strip() + '.*', sentence]) for sentence
+            in get_unrecognizable(string_list, nlp,
+                                  desc='проверка нераспознанных форм выпуска на распознание в spacy-ru')]
 
     if not data:
         print("No new release forms found")
@@ -79,10 +78,12 @@ def save_unrecognizable(path: str,
 
     msg = f"{len(data)} new release forms appended"
 
+    now = datetime.now()
+    header = "# " + now.strftime("%d/%m/%Y, %H:%M:%S")
     if mode == 'a':
-        data = '\n' + '\n'.join(data)
+        data = '\n' + header + '\n' + '\n'.join(data)
     elif mode == 'w':
-        data = DESCRIPTION + '\n'.join(data)
+        data = DESCRIPTION + header + '\n' + '\n'.join(data)
 
     with open(path, mode, encoding='utf-8') as file:
         file.write(data)
@@ -91,7 +92,7 @@ def save_unrecognizable(path: str,
     print(f"File saved '{os.path.abspath(path)}'")
 
 
-def get_nlp(nlp: spacy, model: Literal['sm', 'md', 'lg'] = 'lg') -> spacy:
+def get_nlp(nlp: spacy = None, model: Literal['sm', 'md', 'lg'] = 'lg') -> spacy:
     if nlp is None:
         model_error(model)
         print(f"Loading nlp model...")
@@ -99,9 +100,8 @@ def get_nlp(nlp: spacy, model: Literal['sm', 'md', 'lg'] = 'lg') -> spacy:
     return nlp
 
 
-def get_unrecognizable(string_list: List[str], nlp: spacy = None, model: Literal['sm', 'md', 'lg'] = 'lg') -> List[str]:
-    nlp = get_nlp(nlp, model)
-    return sorted(list(set([string for string in tqdm(set(string_list), ncols=100, desc='get_unrecognizable') if not nlp(cleanup(string)).vector.any()])))
+def get_unrecognizable(string_list: List[str], nlp: spacy, desc: str = None) -> List[str]:
+    return sorted(list(set([string for string in tqdm(set(string_list), ncols=100, desc=desc) if not nlp(cleanup(string)).vector.any()])))
 
 
 def model_error(model: Literal['sm', 'md', 'lg']):
@@ -118,5 +118,5 @@ def cleanup(string: str) -> str:
     return string
 
 
-def read_sub_list(path: str) -> List[Tuple[str, ...]]:
+def read_substitution_list(path: str) -> List[Tuple[str, ...]]:
     return parse_log_lines(lines=read_log(path))

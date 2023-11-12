@@ -1,7 +1,7 @@
 from typing import Tuple, List, Dict, Literal
 
-import numpy as np
 import pandas as pd
+import spacy
 
 # from icecream import ic
 
@@ -10,8 +10,6 @@ from core.utilities import DFS_TYPE, check_column_names_in_df
 from core.similarity import cleanup, get_nlp, get_unrecognizable, Substitution
 from core.utilities import read_excel_package
 
-if not stt.DEBUG:
-    import spacy
 
 # ic.configureOutput(includeContext=True)
 
@@ -21,49 +19,41 @@ class ExcelMaker:
     Класс для создания файла для загрузки в базу
     """
 
-    def __init__(self):
-        self.scheme_task: DFS_TYPE = None
+    def __init__(self, nlp: spacy, substitution: Substitution = None):
+        self._nlp = nlp
+        self._substitution = substitution
+
+        self._scheme_task: DFS_TYPE = None
         self.drug_list: List[str] = None
         self.release_form_list: List[str] = None
-        self.nlp = None
-        self.substitution = None
 
-    def make(self, df_parsed: pd.DataFrame,
-             threshold: float = 0.5,
-             model: Literal['sm', 'md', 'lg'] = 'lg',
-             sub_list: List[Tuple[str, ...]] = None) -> Tuple[DFS_TYPE, List[Tuple[str, ...]]]:
+    def make(self, df_parsed: pd.DataFrame, threshold: float = 0.5) -> Tuple[DFS_TYPE, List[Tuple[str, ...]]]:
         """
         Создает конечный файл со схемой лечения для препаратов из файла drug_task_path
 
         :param df_parsed: таблица с распарсенными данными из соскрепленных html файлов
         :param threshold: порог фильтрации 0..1
-        :param model: какую лингвистическую модель использовать
-        :param sub_list: массив подстановок для класса Substitution из модуля similarity
 
         :return: схему лечения в формате кортежа из двух параметров DataFrame и refused
         """
         self._check_load()
-        self.nlp = get_nlp(self.nlp, model)
-
-        # Замена не найденных выражений формы выпуска препаратов на подходящие для модели self.nlp
-        if sub_list is not None:
-            self.substitution = Substitution(sub_list)
-            print("The substitution list has loaded.")
-            df_parsed = self._substitute(df_parsed)
-
         custom_scheme: DFS_TYPE = dict()
         refused: List[Tuple[str, str]] = list()
+
+        # Замена не найденных выражений формы выпуска препаратов на подходящие для модели self.nlp
+        if self._substitution:
+            df_parsed = self._substitute(df_parsed)
 
         # remove nan values
         df_parsed.dropna(subset=[stt.DRUG_COLUMN, stt.RELEASE_FORM_COLUMN], inplace=True)
 
         count = 1
-        for sheet_name, df_task in self.scheme_task.items():
-            print(f"{sheet_name} ===> {round(count/len(self.scheme_task)*100, 2)} %")
+        for sheet_name, df_task in self._scheme_task.items():
+            print(f"{sheet_name} ===> {round(count / len(self._scheme_task) * 100, 2)} %")
             count += 1
 
             # Замена не найденных выражений формы выпуска препаратов на подходящие для модели self.nlp
-            if sub_list is not None:
+            if self._substitution:
                 df_task = self._substitute(df_task)
 
             rows = list()
@@ -75,8 +65,8 @@ class ExcelMaker:
                         if stt.DEBUG:
                             is_similarity = True
                         else:
-                            doc1 = self.nlp(cleanup(row_task[stt.RELEASE_FORM_COLUMN]))
-                            doc2 = self.nlp(cleanup(row_parsed[stt.RELEASE_FORM_COLUMN]))
+                            doc1 = self._nlp(cleanup(row_task[stt.RELEASE_FORM_COLUMN]))
+                            doc2 = self._nlp(cleanup(row_parsed[stt.RELEASE_FORM_COLUMN]))
                             is_all_zeros1 = not doc1.vector.any()
                             is_all_zeros2 = not doc2.vector.any()
 
@@ -107,50 +97,43 @@ class ExcelMaker:
 
         return custom_scheme, refused
 
-    def check_model(self, df_parsed: pd.DataFrame,
-                    sub_list: List[Tuple[str, ...]] = None,
-                    model: Literal['sm', 'md', 'lg'] = 'lg') -> Tuple[List[str], bool]:
+    def check_model(self, df_parsed: pd.DataFrame) -> Tuple[List[str], bool]:
         """
         Проверяет какие выражения форм выпуска препарата модель не знает, и возвращает их список.
 
         :param df_parsed: таблица с распарсенными данными из соскрепленных html файлов
-        :param sub_list: массив подстановок для класса Substitution из модуля similarity
-        :param model: какую лингвистическую модель использовать
 
         :return Список форм выпуска препаратов не распознаваемые spacy-ru и режим редактирования в булевом значении,
         указывающий редактировать или нет файл содержащий список подстановок sub_list
         """
-        if sub_list is not None and sub_list:
-            edit_mode = True
-        else:
-            edit_mode = False
-
-        print(f"Edit mode :{edit_mode} - depends on the presence of the argument 'sub_list', method: check_model")
         self._check_load()
-        self.nlp = get_nlp(self.nlp, model)
 
-        release_form_list = set(df_parsed[stt.RELEASE_FORM_COLUMN].unique().tolist() + self.release_form_list)
+        joint_release_form_list = set(df_parsed[stt.RELEASE_FORM_COLUMN].unique().tolist() + self.release_form_list)
 
-        if sub_list is not None and sub_list:
-            self.substitution = Substitution(sub_list)
-            release_form_list = [self.substitution(release_form) for release_form in release_form_list]
+        if self._substitution:
+            joint_release_form_list = [self._substitution(release_form) for release_form in joint_release_form_list]
 
-        return get_unrecognizable(release_form_list, nlp=self.nlp), edit_mode
+        return get_unrecognizable(joint_release_form_list,
+                                  self._nlp,
+                                  desc="проверка всех форм выпуска на распознавание")
 
-    def load(self, task_dir_path: str, columns: Dict[str, str] = None):
+    def set_substitution(self, substitution: Substitution):
+        self._substitution = substitution
+
+    def load(self, task_config_dir_path: str, columns: Dict[str, str] = None):
         """
         Загружает и подготавливает развернутую совокупную таблицу задания схемы лечения со всех excel
         файлов из каталога tasks.
         По сути выполняет инициализацию основных атрибутов класса.
 
-        :param task_dir_path: путь к директории где находятся файлы с заданными схемами лечения
+        :param task_config_dir_path: путь к директории где находятся файлы с заданными схемами лечения
         :param columns: словарь для переименования имен колонок
         """
-        self.scheme_task: DFS_TYPE = dict()
+        self._scheme_task: DFS_TYPE = dict()
         self.drug_list: List[str] = list()
         self.release_form_list: List[str] = list()
 
-        dfs = read_excel_package(task_dir_path)
+        dfs = read_excel_package(task_config_dir_path)
 
         count = 1
         for sheet_name, df in dfs.items():
@@ -162,7 +145,7 @@ class ExcelMaker:
                 df = df.rename(columns=columns)
 
             df = self._prepare_df_task(df)
-            self.scheme_task[sheet_name] = df
+            self._scheme_task[sheet_name] = df
             self.drug_list.extend(df[stt.DRUG_COLUMN].values.tolist())
             self.release_form_list.extend(df[stt.RELEASE_FORM_COLUMN].values.tolist())
 
@@ -204,12 +187,15 @@ class ExcelMaker:
         return pd.DataFrame(rows)
 
     def _substitute(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Выполняет замену в таблице DataFrame
+        """
         release_form_list = df[stt.RELEASE_FORM_COLUMN].unique().tolist()
         for release_form in release_form_list:
             df[stt.RELEASE_FORM_COLUMN] = df[stt.RELEASE_FORM_COLUMN].replace(regex=release_form,
-                                                                              value=self.substitution(release_form))
+                                                                              value=self._substitution(release_form))
         return df
 
     def _check_load(self):
-        if self.scheme_task is None or self.drug_list is None or self.release_form_list is None:
+        if self._scheme_task is None or self.drug_list is None or self.release_form_list is None:
             raise ValueError("Any attributes are missing, make sure you have previously run the method 'load'.")
