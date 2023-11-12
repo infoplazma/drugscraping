@@ -93,7 +93,9 @@ class ExcelMaker:
                                             round(similarity, 3),
                                             row_parsed[stt.URL_COLUMN]))
 
-            custom_scheme[sheet_name] = pd.DataFrame(rows)
+            df = pd.DataFrame(rows)
+            if len(df) > 0:
+                custom_scheme[sheet_name] = df
 
         return custom_scheme, refused
 

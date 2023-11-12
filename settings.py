@@ -24,19 +24,17 @@ LOG_DIR = os.path.join(BASE_DIR, 'log')
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 TASK_DIR = os.path.join(BASE_DIR, 'tasks')
 CONFIGS_DIR = os.path.join(BASE_DIR, 'configs')
-#
+
 # Индивидуальные папки для каждого домена внутри папки DATA_DIR
 HTML_DATA_DIR = os.path.join(DATA_DIR, 'html_source')
 EXCEL_DATA_DIR = os.path.join(DATA_DIR, 'excel_target')
 TEMP_DATA_DIR = os.path.join(DATA_DIR, 'temp')
-#
+
 # Файл с перечнем имен препаратов для скрапинга и парсинга
 TASK_FILE_PATH = os.path.join(TASK_DIR, 'task.txt')
-#
-# Файл для хранения и загрузки списка подстановок выражений форм выпуска препарата,
+# Файл для хранения и загрузки списка подстановок выражений форм выпуска препаратов,
 # которые не распознаются объектом nlp пакета spacy-ru. Описание формата и способ редактирование в заглавии файла.
 UNRECOGNIZABLE_FILE_PATH = os.path.join(DATA_DIR, 'unrecognizable.txt')
-
 
 # Добавляемые Таги в конце соскрапленого html файла для хранения значений drug, product_name, url.
 CUSTOM_DRUG_TAG = 'custom_drug'
