@@ -3,11 +3,11 @@ from typing import Tuple, List, Dict, Literal
 import pandas as pd
 import spacy
 
-# from icecream import ic
+from icecream import ic
 
 import settings as stt
 from core.utilities import DFS_TYPE, check_column_names_in_df
-from core.similarity import cleanup, get_nlp, get_unrecognizable, Substitution
+from core.similarity import cleanup, get_unrecognizable, Substitution
 from core.utilities import read_excel_package
 
 
@@ -19,7 +19,7 @@ class ExcelMaker:
     Класс для создания файла для загрузки в базу
     """
 
-    def __init__(self, nlp: spacy, substitution: Substitution = None):
+    def __init__(self, nlp: spacy = None, substitution: Substitution = None):
         self._nlp = nlp
         self._substitution = substitution
 
@@ -40,56 +40,61 @@ class ExcelMaker:
         custom_scheme: DFS_TYPE = dict()
         refused: List[Tuple[str, str]] = list()
 
-        # Замена не найденных выражений формы выпуска препаратов на подходящие для модели self.nlp
-        if self._substitution:
-            df_parsed = self._substitute(df_parsed)
-
         # remove nan values
         df_parsed.dropna(subset=[stt.DRUG_COLUMN, stt.RELEASE_FORM_COLUMN], inplace=True)
+
+        # Замена не найденных выражений формы выпуска препаратов из df_parsed на подходящие для модели self.nlp
+        if self._substitution:
+            df_parsed[stt.REPLACEMENT_COLUMN] = df_parsed[stt.RELEASE_FORM_COLUMN]
+            df_parsed = self._substitute(df_parsed)
 
         count = 1
         for sheet_name, df_task in self._scheme_task.items():
             print(f"{sheet_name} ===> {round(count / len(self._scheme_task) * 100, 2)} %")
             count += 1
 
-            # Замена не найденных выражений формы выпуска препаратов на подходящие для модели self.nlp
+            # Замена всех не найденных выражений формы выпуска препаратов из df_task на подходящие для модели self.nlp
             if self._substitution:
+                df_task[stt.REPLACEMENT_COLUMN] = df_task[stt.RELEASE_FORM_COLUMN]
                 df_task = self._substitute(df_task)
 
             rows = list()
             for index_parsed, row_parsed in df_parsed.iterrows():
+
                 for index_task, row_task in df_task.iterrows():
 
                     if row_parsed[stt.DRUG_COLUMN] == row_task[stt.DRUG_COLUMN]:
 
-                        if stt.DEBUG:
-                            is_similarity = True
+                        doc_task = self._nlp(cleanup(row_task[stt.RELEASE_FORM_COLUMN]))
+                        doc_parsed = self._nlp(cleanup(row_parsed[stt.RELEASE_FORM_COLUMN]))
+
+                        is_all_zeros_task = not doc_task.vector.any()
+                        is_all_zeros_parsed = not doc_parsed.vector.any()
+
+                        if is_all_zeros_task or is_all_zeros_parsed:
+                            similarity = 0
                         else:
-                            doc1 = self._nlp(cleanup(row_task[stt.RELEASE_FORM_COLUMN]))
-                            doc2 = self._nlp(cleanup(row_parsed[stt.RELEASE_FORM_COLUMN]))
-                            is_all_zeros1 = not doc1.vector.any()
-                            is_all_zeros2 = not doc2.vector.any()
+                            similarity = doc_task.similarity(doc_parsed)
 
-                            if is_all_zeros1 or is_all_zeros2:
-                                similarity = 0
-                            else:
-                                similarity = doc1.similarity(doc2)
-
-                            is_similarity = similarity >= threshold
+                        is_similarity = similarity >= threshold
 
                         if is_similarity:
                             row = {stt.ORDER_COLUMN: row_task[stt.ORDER_COLUMN],
                                    stt.SYMPTOM_COLUMN: row_task[stt.SYMPTOM_COLUMN]}
                             row.update(dict(row_parsed))
-                            row[stt.SIMPLY_RELEASE_FORM_COLUMN] = row_task[stt.RELEASE_FORM_COLUMN]
+                            # Вставляем значения оригинальных выражений
+                            row[stt.RELEASE_FORM_COLUMN] = row_parsed[stt.REPLACEMENT_COLUMN]
+                            row[stt.SIMPLY_RELEASE_FORM_COLUMN] = row_task[stt.REPLACEMENT_COLUMN]
                             rows.append(row)
 
-                        elif is_all_zeros1 or is_all_zeros2:
+                        elif is_all_zeros_task or is_all_zeros_parsed:
                             refused.append((row_parsed[stt.DRUG_COLUMN],
-                                            not is_all_zeros1,
+                                            not is_all_zeros_task,
                                             row_task[stt.RELEASE_FORM_COLUMN].replace('\xa0', ' '),
-                                            not is_all_zeros2,
+                                            row_task[stt.REPLACEMENT_COLUMN],
+                                            not is_all_zeros_parsed,
                                             row_parsed[stt.RELEASE_FORM_COLUMN].replace('\xa0', ' '),
+                                            row_parsed[stt.REPLACEMENT_COLUMN],
                                             round(similarity, 3),
                                             row_parsed[stt.URL_COLUMN]))
 
@@ -118,6 +123,9 @@ class ExcelMaker:
         return get_unrecognizable(joint_release_form_list,
                                   self._nlp,
                                   desc="проверка всех форм выпуска на распознавание")
+
+    def set_nlp(self, nlp: spacy):
+        self._nlp = nlp
 
     def set_substitution(self, substitution: Substitution):
         self._substitution = substitution
@@ -194,8 +202,9 @@ class ExcelMaker:
         """
         release_form_list = df[stt.RELEASE_FORM_COLUMN].unique().tolist()
         for release_form in release_form_list:
-            df[stt.RELEASE_FORM_COLUMN] = df[stt.RELEASE_FORM_COLUMN].replace(regex=release_form,
-                                                                              value=self._substitution(release_form))
+            df.loc[df[stt.RELEASE_FORM_COLUMN] == release_form, stt.RELEASE_FORM_COLUMN] = self._substitution(
+                release_form)
+
         return df
 
     def _check_load(self):

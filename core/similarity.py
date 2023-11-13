@@ -110,6 +110,7 @@ def model_error(model: Literal['sm', 'md', 'lg']):
 
 
 def cleanup(string: str) -> str:
+    string = string.replace('\xa0', ' ')
     string = re.sub(r"[\s\,\.\:\;]+", " ", string)
     string = re.sub(r"[ІіїЇ]", "и", string)
     string = re.sub(r"[Єє]", "е", string)

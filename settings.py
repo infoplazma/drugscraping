@@ -72,3 +72,12 @@ URL_COLUMN = 'url'
 ORDER_COLUMN = 'order'
 SYMPTOM_COLUMN = 'symptom'
 IS_ADDED_LAST_COLUMN = True
+
+# Маппинг названий колонок в excel файлах /tasks/*.xlsx
+SCHEME_COLUMN_MAPPER = {"#": ORDER_COLUMN,
+                        "Симптом": SYMPTOM_COLUMN,
+                        "Препарат": DRUG_COLUMN,
+                        "Форма выпуска": RELEASE_FORM_COLUMN}
+
+# Колонка для замены
+REPLACEMENT_COLUMN = "REPLACEMENT"

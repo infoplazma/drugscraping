@@ -1,4 +1,5 @@
 import os
+import re
 
 from colorama import Fore, Style
 
@@ -7,6 +8,8 @@ from core.utilities import is_open_file, make_dir_in_data_dir, dfs_to_excel, mak
 from core.utilities import reset_column_positions
 from settings import HTML_DATA_DIR, EXCEL_DATA_DIR, COLUMN_NAMES
 from likiteka.page_parsing import parse_pages
+from core.maker_lib.task_file_validation import validate_task_list, validate_task_file
+
 
 # from icecream import ic
 # stt.DEBUG = False
@@ -14,15 +17,27 @@ from likiteka.page_parsing import parse_pages
 
 def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str):
 
+    validate_task_file()
+
     if os.path.isfile(temp_file_path):
-        print(f"Загрузка распарсенных данных произойдет из временного файла.")
-        print(f"Если нужно распарсить заново, то удалите временный файл '{temp_file_path}'")
-        _ = input("Press any key:")
-        return
+        print(f"Загрузка распарсенных данных произойдет из раннее созданого временного файла.")
+        print(f"Если нужно распарсить заново, то завершите процесс и удалите\nвременный файл: '{temp_file_path}'")
+        try:
+            key = input("\nНаберите exit либо Ctr+C для завершения процесса или любую клавишу для продолжения:")
+        except KeyboardInterrupt:
+            print(Fore.YELLOW + Style.BRIGHT + "\n\n...terminated")
+            print(Style.RESET_ALL)
+            exit(7)
+        else:
+            if re.search("exit", key, flags=re.I):
+                print(Fore.YELLOW + Style.BRIGHT + "\n...terminated")
+                print(Style.RESET_ALL)
+                exit(7)
 
     source_dir = os.path.join(HTML_DATA_DIR, domain)
     if not os.path.isdir(source_dir):
         print(Fore.RED + Style.BRIGHT + f"Не найдена папка '{source_dir}'", end='')
+        print(Fore.YELLOW + Style.BRIGHT + "\n...terminated")
         print(Style.RESET_ALL)
         exit()
 
@@ -34,6 +49,7 @@ def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str)
 
     make_dir_in_log_dir(stt.TEMP_DATA_DIR)
     if is_open_file(temp_file_path):
+        print(Fore.YELLOW + Style.BRIGHT + "\n...terminated")
         exit()
 
     drug_list = read_log(task_file_path)
@@ -41,6 +57,7 @@ def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str)
     df, refused_url = parse_pages(source_page_dir=source_dir, drug_list=drug_list)
     if len(df) == 0:
         print(Fore.RED + Style.BRIGHT + "Не удалось распарсить ни один препарат.", end='')
+        print(Fore.YELLOW + Style.BRIGHT + "\n...terminated")
         print(Style.RESET_ALL)
         exit()
 
@@ -48,6 +65,7 @@ def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str)
 
     # Сохраняем временный файл с распарсенными данными
     df.to_csv(temp_file_path, index=False)
+
     if stt.DEBUG:
         dfs_to_excel(excel_parsed_path, {domain: df}, highlighted_columns=['Спосіб застосування та дози'])
 

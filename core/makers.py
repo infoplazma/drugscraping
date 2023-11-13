@@ -1,4 +1,6 @@
 import os
+
+from core.maker_lib.task_file_validation import validate_task_file
 from settings import DOMAINS, DomainKeys, TASK_FILE_PATH, TEMP_DATA_DIR, EXCEL_DATA_DIR
 from likiteka.page_scraping import scrape_pages as scrape_likiteka
 
@@ -14,7 +16,11 @@ SCRAPE_FUN_DICT = {
 
 
 def make_scraping(domain_key: str):
-    if domain_key in SCRAPE_FUN_DICT:
+    if domain_key.upper() in SCRAPE_FUN_DICT:
+
+        validate_task_file()
+        domain_key = domain_key.upper()
+
         source_page_dir = make_dir_in_data_dir(domain_key.lower())
         drug_list = read_log(TASK_FILE_PATH)
         scrape_fun = SCRAPE_FUN_DICT[domain_key]
@@ -28,8 +34,11 @@ def make_scraping(domain_key: str):
 
 
 def make_parsing(domain_key: str):
-    if domain_key in SCRAPE_FUN_DICT:
+    if domain_key.upper() in SCRAPE_FUN_DICT:
+
+        validate_task_file()
         domain_key = domain_key.lower()
+
         temp_file_path = os.path.join(TEMP_DATA_DIR, domain_key + "_parsed.csv")
         # Путь где будет сохранен файл
         target_excel_file_path = os.path.join(EXCEL_DATA_DIR, domain_key + ".xlsx")
