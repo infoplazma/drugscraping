@@ -68,9 +68,14 @@ def save_unrecognizable(path: str,
         mode = 'a'
 
     string_list = sorted(set(string_list))
-    data = [LOG_SEP.join([sentence, cleanup(sentence), '.*' + cleanup(sentence).strip() + '.*', sentence]) for sentence
-            in get_unrecognizable(string_list, nlp,
-                                  desc='проверка нераспознанных форм выпуска на распознание в spacy-ru')]
+
+    if nlp is not None:
+        data = [LOG_SEP.join([sentence, cleanup(sentence), '.*' + cleanup(sentence).strip() + '.*', sentence])
+                for sentence in get_unrecognizable(
+                string_list, nlp, desc='проверка нераспознанных форм выпуска на распознание в spacy-ru')]
+    else:
+        data = [LOG_SEP.join([sentence, cleanup(sentence), '.*' + cleanup(sentence).strip() + '.*', sentence])
+                for sentence in string_list]
 
     if not data:
         print("No new release forms found")

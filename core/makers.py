@@ -1,6 +1,13 @@
 import os
+from typing import Tuple
+
+from colorama import Fore, Style
+
+import settings as stt
+from core.maker_lib.inspection import inspect
 
 from core.maker_lib.task_file_validation import validate_task_file
+from core.similarity import read_substitution_list, save_unrecognizable
 from settings import DOMAINS, DomainKeys, TASK_FILE_PATH, TEMP_DATA_DIR, EXCEL_DATA_DIR
 from likiteka.page_scraping import scrape_pages as scrape_likiteka
 
@@ -49,6 +56,28 @@ def make_parsing(domain_key: str):
         raise FailedDomainKey(f'Not found key \'{domain_key}\' in {SCRAPE_FUN_DICT.keys()}')
 
 
-if __name__ == "__main__":
-    # make_scraping(DomainKeys(0).name)
-    make_parsing(DomainKeys(0).name)
+def make_inspecting(domain: str) -> Tuple[str]:
+    source_dir = os.path.join(stt.HTML_DATA_DIR, domain.lower())
+    if not os.path.isdir(source_dir):
+        print(Fore.RED + Style.BRIGHT + f"Не найдена папка '{source_dir}'", end='')
+        print(Fore.YELLOW + Style.BRIGHT + "\n...terminated")
+        print(Style.RESET_ALL)
+        exit()
+
+    return inspect(source_dir)
+
+
+def make_unrecognizable(release_form: str = None) -> Tuple[str]:
+    if os.path.isfile(stt.UNRECOGNIZABLE_FILE_PATH):
+        if release_form:
+            save_unrecognizable(stt.UNRECOGNIZABLE_FILE_PATH, [release_form])
+        return read_substitution_list(stt.UNRECOGNIZABLE_FILE_PATH)
+    else:
+        print(Fore.RED + Style.BRIGHT + f"Не найден файл:'{stt.UNRECOGNIZABLE_FILE_PATH}'", end='')
+        print(Fore.YELLOW + Style.BRIGHT + "\n...terminated")
+        print(Style.RESET_ALL)
+        exit()
+
+
+
+
