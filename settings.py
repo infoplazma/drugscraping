@@ -36,6 +36,10 @@ TASK_FILE_PATH = os.path.join(TASK_DIR, 'task.txt')
 # которые не распознаются объектом nlp пакета spacy-ru. Описание формата и способ редактирование в заглавии файла.
 UNRECOGNIZABLE_FILE_PATH = os.path.join(DATA_DIR, 'unrecognizable.txt')
 
+# Файлы содержащие формы выпуска препаратов из задания и спарсенные с сайтов
+RELEASE_FORM_TASK_PATH = os.path.join(DATA_DIR, 'release_form_task.txt')
+RELEASE_FORM_PARSED_PATH = os.path.join(DATA_DIR, 'release_form_parsed.txt')
+
 # Добавляемые Таги в конце соскрапленого html файла для хранения значений drug, product_name, url.
 CUSTOM_DRUG_TAG = 'custom_drug'
 CUSTOM_PRODUCT_NAME_TAG = 'custom_product_name'

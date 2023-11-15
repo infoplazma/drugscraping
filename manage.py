@@ -28,7 +28,7 @@ def main(process: str, domain, n, add):
 
         scrape - скрепит заданный домен, обязательный аргумент имя domain
 
-        parse- парсит собранные данные с домена, обязательный аргумент имя domain
+        parse - парсит собранные данные с домена, обязательный аргумент имя domain
 
         inspect - проверяет какие перепараты соскрепленны для конкретного домена, обязательный аргумент имя domain
 
@@ -68,13 +68,14 @@ def main(process: str, domain, n, add):
 
         case {'show': '', 'n': -1}:
             drug_tusk_list = read_log(stt.TASK_FILE_PATH)
-            click.secho(pprint.pformat(drug_tusk_list), fg='green')
+            click.echo(pprint.pformat(drug_tusk_list))
+            click.secho(f"В файл:'{stt.TASK_FILE_PATH}'\n", fg='green')
 
         case {'show': '', 'n': int(n)} if n > 0:
             drug_tusk_list = read_log(stt.TASK_FILE_PATH)
             click.secho(f"Препаратов {len(drug_tusk_list)}:\n", fg='green')
             click.secho(pprint.pformat(drug_tusk_list[:n]), fg='green')
-            click.secho(f"В файл:'{stt.TASK_FILE_PATH}'", fg='green')
+            click.secho(f"В файл:'{stt.TASK_FILE_PATH}'\n", fg='green')
 
         case {'copy': ''}:
             drug_tusk_list = fill_drugs(stt.TASK_DIR, stt.TASK_FILE_PATH)

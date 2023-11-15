@@ -11,7 +11,17 @@ from core.excel_maker import ExcelMaker
 from core.similarity import Substitution, save_unrecognizable, read_substitution_list, get_nlp
 
 
-def make_target_excel_file(temp_file_path: str, target_excel_file_path: str, temp_remove=True):
+def make_target_excel_file(temp_file_path: str, target_excel_file_path: str, temp_remove=True) -> ExcelMaker:
+    """
+    Создает и сохраняет excel файл для базы данных
+
+    :param temp_file_path:
+    :param target_excel_file_path:
+    :param temp_remove: удалять временный файл после использования
+
+    :return: объект ExcelMaker
+
+    """
 
     if is_open_file(target_excel_file_path):
         exit()
@@ -83,6 +93,8 @@ def make_target_excel_file(temp_file_path: str, target_excel_file_path: str, tem
 
         if not refused:
             print('Не обнаружено отклоненных записей')
+
+        return maker
 
 
 if __name__ == "__main__":

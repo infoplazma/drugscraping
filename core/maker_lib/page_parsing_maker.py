@@ -1,6 +1,8 @@
 import os
 import re
 
+import pandas as pd
+
 from colorama import Fore, Style
 
 import settings as stt
@@ -15,15 +17,23 @@ from core.maker_lib.task_file_validation import validate_task_list, validate_tas
 # stt.DEBUG = False
 
 
-def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str):
+def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str) -> pd.DataFrame:
+    """
+    Осуществляет валидацию и после возвращает распарсенную таблицу в формате pd.DataFrame
+    :param domain:
+    :param task_file_path: файл с перечнем лекарств которые нужно распарсить
+    :param temp_file_path:
 
+    :return: возвращает распарсенную таблицу в формате pd.DataFrame
+
+    """
     validate_task_file()
 
     if os.path.isfile(temp_file_path):
         print(f"Загрузка распарсенных данных произойдет из раннее созданого временного файла.")
         print(f"Если нужно распарсить заново, то завершите процесс и удалите\nвременный файл: '{temp_file_path}'")
         try:
-            key = input("\nНаберите exit либо Ctr+C для завершения процесса или любую клавишу для продолжения:")
+            key = input("\nНаберите exit либо Ctr+C для завершения процесса или Enter для продолжения:")
         except KeyboardInterrupt:
             print(Fore.YELLOW + Style.BRIGHT + "\n\n...terminated")
             print(Style.RESET_ALL)
@@ -62,6 +72,11 @@ def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str)
         exit()
 
     df = reset_column_positions(df, COLUMN_NAMES)
+    # remove nan values
+    df.dropna(subset=[stt.DRUG_COLUMN, stt.RELEASE_FORM_COLUMN], inplace=True)
+    # clear whitespace '\xa0'
+    _clear = lambda x: re.sub(r"\s+", " ", str(x)).strip() if isinstance(x, str) else x
+    df = df.apply(_clear)
 
     # Сохраняем временный файл с распарсенными данными
     df.to_csv(temp_file_path, index=False)
@@ -72,6 +87,8 @@ def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str)
     domain_log_dir = make_dir_in_log_dir(domain)
     log_file_path = os.path.join(domain_log_dir, domain + "_parsed_refused_url.log")
     save_log(log_file_path, refused_url)
+
+    return df
 
 
 if __name__ == "__main__":

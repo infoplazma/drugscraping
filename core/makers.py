@@ -5,6 +5,7 @@ from colorama import Fore, Style
 
 import settings as stt
 from core.maker_lib.inspection import inspect
+from core.maker_lib.release_forms_found import reload_release_form_files
 
 from core.maker_lib.task_file_validation import validate_task_file
 from core.similarity import read_substitution_list, save_unrecognizable
@@ -50,8 +51,9 @@ def make_parsing(domain_key: str):
         # Путь где будет сохранен файл
         target_excel_file_path = os.path.join(EXCEL_DATA_DIR, domain_key + ".xlsx")
 
-        make_temp_parsed_file(domain_key, TASK_FILE_PATH, temp_file_path)
-        make_target_excel_file(temp_file_path, target_excel_file_path)
+        df_parsed = make_temp_parsed_file(domain_key, TASK_FILE_PATH, temp_file_path)
+        maker = make_target_excel_file(temp_file_path, target_excel_file_path)
+        reload_release_form_files(maker, df_parsed)
     else:
         raise FailedDomainKey(f'Not found key \'{domain_key}\' in {SCRAPE_FUN_DICT.keys()}')
 

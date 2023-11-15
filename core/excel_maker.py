@@ -100,7 +100,7 @@ class ExcelMaker:
 
             df = pd.DataFrame(rows)
             if len(df) > 0:
-                custom_scheme[sheet_name] = df
+                custom_scheme[sheet_name] = df.drop(columns=[stt.REPLACEMENT_COLUMN])
 
         return custom_scheme, refused
 

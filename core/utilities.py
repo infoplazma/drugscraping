@@ -28,6 +28,13 @@ def save_log(path: str, log_list: List[Tuple[str, ...]]) -> None:
             fp.write(LOG_SEP.join(map(str, data)) + "\n")
 
 
+def save_lines(path: str, lines: List[str]) -> None:
+    with open(path, 'w', encoding="utf-8") as fp:
+        for line in lines:
+            # write each data on a new line
+            fp.write(str(line) + "\n")
+
+
 def read_log(path: str) -> List[str]:
     with open(path, "r", encoding="utf-8") as file:
         # reading the file

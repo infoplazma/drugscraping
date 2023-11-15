@@ -93,11 +93,11 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
 
                 # Заполняем словарь
                 record = {DRUG_COLUMN: drug,
-                          PRODUCT_NAME_COLUMN: product_name,
-                          TRADE_NAME_COLUMN: product_name,
-                          ACTIVE_INGREDIENTS_COLUMN: active_ingredients,
-                          SIMPLY_RELEASE_FORM_COLUMN: release_form,
-                          RELEASE_FORM_COLUMN: release_form,
+                          PRODUCT_NAME_COLUMN: _format_text(product_name),
+                          TRADE_NAME_COLUMN: _format_text(product_name),
+                          ACTIVE_INGREDIENTS_COLUMN: _format_text(active_ingredients),
+                          SIMPLY_RELEASE_FORM_COLUMN: _format_text(release_form),
+                          RELEASE_FORM_COLUMN: _format_text(release_form),
                           COMPOSITION_COLUMN: np.nan,
                           CHILDREN_COLUMN: np.nan,
                           URL_COLUMN: url}
@@ -119,18 +119,8 @@ def _parse_page(chapters: bs4.element.ResultSet) -> List[DataPage]:
     return data_list
 
 
-def set_symptom(df_source: pd.DataFrame, df_target: pd.DataFrame, desc_tqdm='Index', disable_tqdm=False) -> pd.DataFrame:
-    for index_src in tqdm(df_source.index, desc=desc_tqdm, ncols=100, disable=disable_tqdm):
-        value = df_source.loc[index_src, DRUG_COLUMN]
-        if value is not np.nan:
-            idx = df_target[df_target[DRUG_COLUMN] == value].index
-            if idx.values.size:
-                df_target.loc[idx, SYMPTOM_COLUMN] = df_source.loc[index_src, SYMPTOM_COLUMN]
-
-    return df_target
-
-
 def _format_text(text: str) -> str:
-    text = re.sub(r'\s+', ' ', text)
-    text = text.strip()
+    if isinstance(text, str):
+        text = re.sub(r'\s+', ' ', text)
+        text = text.replace("\xa0", " ").strip()
     return text
