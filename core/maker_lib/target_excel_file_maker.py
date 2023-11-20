@@ -65,16 +65,20 @@ def make_target_excel_file(temp_file_path: str, target_excel_file_path: str, tem
         save_unrecognizable(stt.UNRECOGNIZABLE_FILE_PATH, unrecognizable_list, nlp)
         print(f"Обнаружено {len(unrecognizable_list)} нераспознаваемых выражений:")
         pprint(unrecognizable_list)
-        print(f"\nДля редактирования перейти к \n'{stt.UNRECOGNIZABLE_FILE_PATH}'")
+        print(Fore.YELLOW + Style.BRIGHT + f"\nЦелевой excel файл создан не будет !")
+        print(f"Для редактирования перейти к \n'{stt.UNRECOGNIZABLE_FILE_PATH}'")
+        print("...terminated")
+        print(Style.RESET_ALL)
+        exit()
     else:
         # Создаем файл для загрузки в базу данных
-        print("Создание excel файла для загрузки в базу данных...")
+        print("\nСоздание целевого excel файла для загрузки в базу данных...")
         dfs, refused = maker.make(df_parsed=df_parsed, threshold=stt.RELEASE_FORM_THRESHOLD)
 
         # Проверяем результат
         if len(dfs) == 0:
-            print(Fore.RED + Style.BRIGHT + "Не удалось найти ни один подходящий препарат.", end='')
-            print(Fore.YELLOW + Style.BRIGHT + "\n...terminated")
+            print(Fore.RED + Style.BRIGHT + "Не удалось найти ни один подходящий препарат.")
+            print(Fore.YELLOW + Style.BRIGHT + "...terminated")
             print(Style.RESET_ALL)
             exit()
 

@@ -60,13 +60,17 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
                 url = soup.find(CUSTOM_URL_TAG).text
 
                 # product_name
-                product_name = soup.find('div', attrs={'class': 'tablets-container'}).find('h1').text
+                try:
+                    product_name = soup.find('div', attrs={'class': 'tablets-container'}).find('h1').text
+                except AttributeError:
+                    refused_url.append((drug, url, 'product_name', 'AttributeError', path))
+                    continue
 
                 # Форма выпуска
                 try:
                     release_form = soup.find('p', string="Лікарська форма").find_next('p').text
                 except AttributeError:
-                    refused_url.append((drug, url, 'Лікарська форма', 'AttributeError'))
+                    refused_url.append((drug, url, 'Лікарська форма', 'AttributeError', path))
                     release_form = np.nan
 
                 # Діюча речовина
@@ -89,7 +93,7 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
                             pass
 
                 if active_ingredients is np.nan:
-                    refused_url.append((drug, url, 'Діюча речовина', 'AttributeError'))
+                    refused_url.append((drug, url, 'Діюча речовина', 'AttributeError', path))
 
                 # Заполняем словарь
                 record = {DRUG_COLUMN: drug,

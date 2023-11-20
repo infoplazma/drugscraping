@@ -36,6 +36,8 @@ TASK_FILE_PATH = os.path.join(TASK_DIR, 'task.txt')
 # которые не распознаются объектом nlp пакета spacy-ru. Описание формата и способ редактирование в заглавии файла.
 UNRECOGNIZABLE_FILE_PATH = os.path.join(DATA_DIR, 'unrecognizable.txt')
 
+REMOVE_TEMP_FILE = True
+
 # Файлы содержащие формы выпуска препаратов из задания и спарсенные с сайтов
 RELEASE_FORM_TASK_PATH = os.path.join(DATA_DIR, 'release_form_task.txt')
 RELEASE_FORM_PARSED_PATH = os.path.join(DATA_DIR, 'release_form_parsed.txt')

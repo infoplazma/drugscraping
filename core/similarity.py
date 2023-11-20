@@ -63,7 +63,7 @@ def save_unrecognizable(path: str,
         previous_sentence_list = set([line[0] for line in lines] + [line[3] for line in lines])
         string_list = list(set(string_list).difference(previous_sentence_list))
         if not string_list:
-            print("No new release forms found to save")
+            print(f"Не обнаружено новых значений нераспознаваемых форм выпуска препарата, каких нет в файле {path}")
             return
         mode = 'a'
 
@@ -105,8 +105,8 @@ def get_nlp(nlp: spacy = None, model: Literal['sm', 'md', 'lg'] = 'lg') -> spacy
     return nlp
 
 
-def get_unrecognizable(string_list: List[str], nlp: spacy, desc: str = None) -> List[str]:
-    return sorted(list(set([string for string in tqdm(set(string_list), ncols=100, desc=desc) if not nlp(cleanup(string)).vector.any()])))
+def get_unrecognizable(string_list: List[str], nlp: spacy, desc: str = None, disable_tqdm=False) -> List[str]:
+    return sorted(list(set([string for string in tqdm(set(string_list), ncols=100, desc=desc, disable=disable_tqdm) if not nlp(cleanup(string)).vector.any()])))
 
 
 def model_error(model: Literal['sm', 'md', 'lg']):

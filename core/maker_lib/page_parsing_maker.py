@@ -80,6 +80,7 @@ def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str)
 
     # Сохраняем временный файл с распарсенными данными
     df.to_csv(temp_file_path, index=False)
+    print(f"Временный файл сохранен:'{temp_file_path}'")
 
     if stt.DEBUG:
         dfs_to_excel(excel_parsed_path, {domain: df}, highlighted_columns=['Спосіб застосування та дози'])
