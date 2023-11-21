@@ -32,7 +32,7 @@ class ExcelMaker:
         Создает конечный файл со схемой лечения для препаратов из файла drug_task_path
 
         :param df_parsed: таблица с распарсенными данными из соскрепленных html файлов
-        :param threshold: порог фильтрации 0..1
+        :param threshold: порог похожести фильтрации 0..1
 
         :return: схему лечения в формате кортежа из двух параметров DataFrame и refused
         """
@@ -122,7 +122,7 @@ class ExcelMaker:
 
         return get_unrecognizable(joint_release_form_list,
                                   self._nlp,
-                                  desc="проверка всех форм выпуска на распознавание")
+                                  desc="Проверка всех форм выпуска на распознавание")
 
     def set_nlp(self, nlp: spacy):
         self._nlp = nlp

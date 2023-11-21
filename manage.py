@@ -6,7 +6,8 @@ import pprint
 import click
 
 from core.maker_lib.full_task_file_maker import fill_drugs
-from core.makers import make_parsing, make_scraping, make_inspecting, add_unrecognizable_to_list, check_release_form
+from core.makers import make_parsing, make_scraping, make_inspecting, add_unrecognizable_to_list, check_release_form, \
+    make_target_file
 from core.utilities import read_log
 from settings import DOMAINS
 import settings as stt
@@ -30,6 +31,8 @@ def main(process: str, domain, n, add, check):
         scrape - скрепит заданный домен, обязательный аргумент имя domain
 
         parse - парсит собранные данные с домена, обязательный аргумент имя domain
+
+        make - создает целевой excel файл для домена, обязательный аргумент имя domain
 
         inspect - проверяет какие перепараты соскрепленны для конкретного домена, обязательный аргумент имя domain
 
@@ -61,8 +64,12 @@ def main(process: str, domain, n, add, check):
             make_scraping(domain)
 
         case {'parse': str(x)} if x.upper() in DOMAIN_LIST:
-            click.secho(f"\nStart parsing domain: '{x}'", fg='green')
+            click.secho(f"\nStart parsing domain's html files: '{x}'", fg='green')
             make_parsing(domain)
+
+        case {'make': str(x)} if x.upper() in DOMAIN_LIST:
+            click.secho(f"\nStart making target excel file: '{x}'", fg='green')
+            make_target_file(domain)
 
         case {'inspect': str(x)} if x.upper() in DOMAIN_LIST:
             click.secho(f"\nStart inspecting domain: '{x}'", fg='green')

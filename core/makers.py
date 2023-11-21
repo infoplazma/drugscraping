@@ -1,6 +1,8 @@
 import os
 from typing import Tuple
 
+import pandas as pd
+
 from colorama import Fore, Style
 
 import settings as stt
@@ -50,13 +52,27 @@ def make_parsing(domain_key: str):
 
         # Путь к временному файлу
         temp_file_path = os.path.join(TEMP_DATA_DIR, domain_key + "_parsed.csv")
+        # Распарсивються данные и сохраняютсь в временном файле и объекте df_parsed
+        make_temp_parsed_file(domain_key, TASK_FILE_PATH, temp_file_path)
+
+    else:
+        raise FailedDomainKey(f'Not found key \'{domain_key}\' in {SCRAPE_FUN_DICT.keys()}')
+
+
+def make_target_file(domain_key: str):
+    if domain_key.upper() in SCRAPE_FUN_DICT:
+        validate_task_file()
+        domain_key = domain_key.lower()
+
+        # Путь к временному файлу
+        temp_file_path = os.path.join(TEMP_DATA_DIR, domain_key + "_parsed.csv")
         # Путь где будет сохранен файл
         target_excel_file_path = os.path.join(EXCEL_DATA_DIR, domain_key + ".xlsx")
 
-        # Распарсивються данные и сохраняютсь в временном файле и объекте df_parsed
-        df_parsed = make_temp_parsed_file(domain_key, TASK_FILE_PATH, temp_file_path)
         # Создается целевой файл target_excel_file_path
-        maker = make_target_excel_file(temp_file_path, target_excel_file_path, stt.REMOVE_TEMP_FILE)
+        maker = make_target_excel_file(temp_file_path, target_excel_file_path)
+        # Создает два файла с выражениями форм выпуска препарата из задания и из распарсенных данных
+        df_parsed = pd.read_csv(temp_file_path)
         reload_release_form_files(maker, df_parsed)
     else:
         raise FailedDomainKey(f'Not found key \'{domain_key}\' in {SCRAPE_FUN_DICT.keys()}')

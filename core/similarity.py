@@ -63,7 +63,8 @@ def save_unrecognizable(path: str,
         previous_sentence_list = set([line[0] for line in lines] + [line[3] for line in lines])
         string_list = list(set(string_list).difference(previous_sentence_list))
         if not string_list:
-            print(f"Не обнаружено новых значений нераспознаваемых форм выпуска препарата, каких нет в файле {path}")
+            print(f"\nПроверка для добавления нераспознаваемых форм выпуска препарата...")
+            print(f"Не обнаружено новых значений для сохранения в: '{path}'")
             return
         mode = 'a'
 

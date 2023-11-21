@@ -11,7 +11,7 @@ from core.excel_maker import ExcelMaker
 from core.similarity import Substitution, save_unrecognizable, read_substitution_list, get_nlp
 
 
-def make_target_excel_file(temp_file_path: str, target_excel_file_path: str, temp_remove=True) -> ExcelMaker:
+def make_target_excel_file(temp_file_path: str, target_excel_file_path: str, temp_remove=False) -> ExcelMaker:
     """
     Создает и сохраняет excel файл для базы данных
 
@@ -35,7 +35,7 @@ def make_target_excel_file(temp_file_path: str, target_excel_file_path: str, tem
     if temp_remove:
         os.remove(temp_file_path)
     else:
-        print(Fore.YELLOW + Style.BRIGHT + f"Временный файл не был удален так как {temp_remove=}", end='')
+        print(Fore.YELLOW + Style.BRIGHT + f"Временный файл не был удален так как флаг: {temp_remove=}", end='')
         print(Style.RESET_ALL)
 
     df_parsed.dropna(subset=[stt.DRUG_COLUMN, stt.RELEASE_FORM_COLUMN], inplace=True)
@@ -63,11 +63,11 @@ def make_target_excel_file(temp_file_path: str, target_excel_file_path: str, tem
     if unrecognizable_list:
         # Создается или обновляется файл для корректировки выражений форм выпуска препаратов
         save_unrecognizable(stt.UNRECOGNIZABLE_FILE_PATH, unrecognizable_list, nlp)
-        print(f"Обнаружено {len(unrecognizable_list)} нераспознаваемых выражений:")
+        print(Fore.YELLOW + Style.BRIGHT + f"\nОбнаружено {len(unrecognizable_list)} нераспознаваемых выражений:")
         pprint(unrecognizable_list)
-        print(Fore.YELLOW + Style.BRIGHT + f"\nЦелевой excel файл создан не будет !")
-        print(f"Для редактирования перейти к \n'{stt.UNRECOGNIZABLE_FILE_PATH}'")
-        print("...terminated")
+        print(f"\nЦелевой excel файл создан не будет !")
+        print(f"Для редактирования перейти к '{stt.UNRECOGNIZABLE_FILE_PATH}'")
+        print("Aborted!")
         print(Style.RESET_ALL)
         exit()
     else:
@@ -78,7 +78,7 @@ def make_target_excel_file(temp_file_path: str, target_excel_file_path: str, tem
         # Проверяем результат
         if len(dfs) == 0:
             print(Fore.RED + Style.BRIGHT + "Не удалось найти ни один подходящий препарат.")
-            print(Fore.YELLOW + Style.BRIGHT + "...terminated")
+            print(Fore.YELLOW + Style.BRIGHT + "Aborted!")
             print(Style.RESET_ALL)
             exit()
 

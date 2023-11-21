@@ -6,7 +6,8 @@ import pandas as pd
 from colorama import Fore, Style
 
 import settings as stt
-from core.utilities import is_open_file, make_dir_in_data_dir, dfs_to_excel, make_dir_in_log_dir, save_log, read_log
+from core.utilities import is_open_file, make_dir_in_data_dir, dfs_to_excel, make_dir_in_log_dir, save_log, read_log, \
+    pretty_format
 from core.utilities import reset_column_positions
 from settings import HTML_DATA_DIR, EXCEL_DATA_DIR, COLUMN_NAMES
 from likiteka.page_parsing import parse_pages
@@ -29,20 +30,20 @@ def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str)
     """
     validate_task_file()
 
-    if os.path.isfile(temp_file_path):
-        print(f"Загрузка распарсенных данных произойдет из раннее созданого временного файла.")
-        print(f"Если нужно распарсить заново, то завершите процесс и удалите\nвременный файл: '{temp_file_path}'")
-        try:
-            key = input("\nНаберите exit либо Ctr+C для завершения процесса или Enter для продолжения:")
-        except KeyboardInterrupt:
-            print(Fore.YELLOW + Style.BRIGHT + "\n\n...terminated")
-            print(Style.RESET_ALL)
-            exit(7)
-        else:
-            if re.search("exit", key, flags=re.I):
-                print(Fore.YELLOW + Style.BRIGHT + "\n...terminated")
-                print(Style.RESET_ALL)
-                exit(7)
+    # if os.path.isfile(temp_file_path):
+    #     print(f"Загрузка распарсенных данных произойдет из раннее созданого временного файла.")
+    #     print(f"Если нужно распарсить заново, то завершите процесс и удалите\nвременный файл: '{temp_file_path}'")
+    #     try:
+    #         key = input("\nНаберите exit либо Ctr+C для завершения процесса или Enter для продолжения:")
+    #     except KeyboardInterrupt:
+    #         print(Fore.YELLOW + Style.BRIGHT + "\n\n...terminated")
+    #         print(Style.RESET_ALL)
+    #         exit(7)
+    #     else:
+    #         if re.search("exit", key, flags=re.I):
+    #             print(Fore.YELLOW + Style.BRIGHT + "\n...terminated")
+    #             print(Style.RESET_ALL)
+    #             exit(7)
 
     source_dir = os.path.join(HTML_DATA_DIR, domain)
     if not os.path.isdir(source_dir):
@@ -75,12 +76,12 @@ def make_temp_parsed_file(domain: str, task_file_path: str, temp_file_path: str)
     # remove nan values
     df.dropna(subset=[stt.DRUG_COLUMN, stt.RELEASE_FORM_COLUMN], inplace=True)
     # clear whitespace '\xa0'
-    _clear = lambda x: re.sub(r"\s+", " ", str(x)).strip() if isinstance(x, str) else x
-    df = df.apply(_clear)
+    df[stt.DRUG_COLUMN] = df[stt.DRUG_COLUMN].map(pretty_format)
+    df[stt.RELEASE_FORM_COLUMN] = df[stt.RELEASE_FORM_COLUMN].map(pretty_format)
 
     # Сохраняем временный файл с распарсенными данными
     df.to_csv(temp_file_path, index=False)
-    print(f"Временный файл сохранен:'{temp_file_path}'")
+    print(f"Файл с базой данных сохранен:'{temp_file_path}'")
 
     if stt.DEBUG:
         dfs_to_excel(excel_parsed_path, {domain: df}, highlighted_columns=['Спосіб застосування та дози'])

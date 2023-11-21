@@ -143,3 +143,7 @@ def reset_column_positions(df: pd.DataFrame, position_pattern: List[str]) -> pd.
 def check_column_names_in_df(df: pd.DataFrame, required_column_names: List[str]):
     if not set(required_column_names).issubset(set(df.columns.tolist())):
         raise ValueError(f"Not found required columns {set(required_column_names).difference(set(df.columns.tolist()))}")
+
+
+def pretty_format(line: str) -> str:
+    return re.sub(r"\s+", " ", line.replace('\xa0', ' ').replace('\n', ' ')).strip()
