@@ -61,7 +61,7 @@ def make_parsing(domain_key: str):
 
 def make_target_file(domain_key: str):
     if domain_key.upper() in SCRAPE_FUN_DICT:
-        validate_task_file()
+        # validate_task_file()
         domain_key = domain_key.lower()
 
         # Путь к временному файлу
@@ -114,6 +114,7 @@ def check_release_form(release_form: str):
                 print(Fore.YELLOW + Style.BRIGHT + f"\n'{release_form}' - не распозналась")
                 print(Style.RESET_ALL)
             else:
-                print(f"\n'{release_form}' ===> '{checked_release_form}'\n")
+                print(Fore.GREEN + Style.BRIGHT + f"\n'{release_form}' ===> '{checked_release_form}'\n")
+                print(Style.RESET_ALL)
 
             release_form = input('Введите новую форму выпуска для проверки или Ctrl+C для выхода:')

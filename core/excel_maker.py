@@ -3,6 +3,8 @@ from typing import Tuple, List, Dict, Literal
 import pandas as pd
 import spacy
 
+from tqdm import tqdm
+
 from icecream import ic
 
 import settings as stt
@@ -59,7 +61,7 @@ class ExcelMaker:
                 df_task = self._substitute(df_task)
 
             rows = list()
-            for index_parsed, row_parsed in df_parsed.iterrows():
+            for index_parsed, row_parsed in tqdm(tuple(df_parsed.iterrows()), ncols=100):
 
                 for index_task, row_task in df_task.iterrows():
 
