@@ -29,6 +29,7 @@ CONFIGS_DIR = os.path.join(BASE_DIR, 'configs')
 HTML_DATA_DIR = os.path.join(DATA_DIR, 'html_source')
 EXCEL_DATA_DIR = os.path.join(DATA_DIR, 'excel_target')
 TEMP_DATA_DIR = os.path.join(DATA_DIR, 'temp')
+STATISTICS_DATA_DIR = os.path.join(DATA_DIR, 'statistics')
 
 # Файл с перечнем имен препаратов для скрапинга и парсинга
 TASK_FILE_PATH = os.path.join(TASK_DIR, 'task.txt')

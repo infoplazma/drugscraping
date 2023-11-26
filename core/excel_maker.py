@@ -126,6 +126,9 @@ class ExcelMaker:
                                   self._nlp,
                                   desc="Проверка всех форм выпуска на распознавание")
 
+    def get_scheme(self) -> DFS_TYPE:
+        return self._scheme_task
+
     def set_nlp(self, nlp: spacy):
         self._nlp = nlp
 

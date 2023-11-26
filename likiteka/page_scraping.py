@@ -2,6 +2,7 @@ import os
 import re
 import time
 from typing import Tuple, List
+import hashlib
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 
@@ -57,10 +58,15 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
                 product_name = match.group(1)
                 driver.get(url)
                 driver.implicitly_wait(3)
-                path = os.path.abspath(os.path.join(source_page_dir, f'{drug}--({product_name}).html'))
+
+                html_content = driver.page_source + add_tail(drug, product_name, url)
+                hashed_data = hashlib.sha1(html_content.encode())
+                hashed_filename = hashed_data.hexdigest() + ".html"
+
+                path = os.path.abspath(os.path.join(source_page_dir, hashed_filename))
                 with open(path, 'w', encoding="utf-8") as file:
-                    file.write(driver.page_source + add_tail(drug, product_name, url))
-                print(f"file saved: '{path}'")
+                    file.write(html_content)
+                print(f"'{product_name}' saved: '{url}'")
             else:
                 refused_url.append((drug, url))
                 print(f"not found pattern for {url=}")

@@ -129,6 +129,16 @@ def get_excel_path_list(dir_path: str) -> List[str]:
     return file_list
 
 
+def get_file_path_list(dir_path: str) -> List[str]:
+    file_list: List[str] = list()
+    for root, _, dir_files in os.walk(dir_path):
+        for file in dir_files:
+            path = os.path.abspath(os.path.join(root, file))
+            file_list.append(path)
+
+    return file_list
+
+
 def reset_column_positions(df: pd.DataFrame, position_pattern: List[str]) -> pd.DataFrame:
     """
     Устанавливает порядок следования колонок по образцу position_pattern
