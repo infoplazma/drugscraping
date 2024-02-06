@@ -66,6 +66,7 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
             match = re.search(r"/([\w-]+-p\d+)$", url)
             if match:
                 driver.get(url)
+                time.sleep(3)
                 driver.implicitly_wait(3)
 
                 if product_name := driver.find_elements(By.XPATH, "//*/div[@class='product-head-instr tl']/h1"):
@@ -96,9 +97,13 @@ if __name__ == "__main__":
 
     DOMAIN_URL = r"https://apteka911.ua/ua"
     SOURCE_HTML_DIR = "./html_source"
+    START_DRUG = "Синекод краплі ор. д/діт. 5 мг/мл по 20 мл у флак."
 
     df = transform_to_df(settings.ONE_DRIVE_DIR)
     DRUG_LIST = sorted(df["drug"].unique())
+    index = DRUG_LIST.index(START_DRUG)
+    DRUG_LIST = DRUG_LIST[index:]
+    print(f"{index=}  {DRUG_LIST[0]=}")
     # print(*drug_list, sep="\n")
     print(f"{len(DRUG_LIST)=}")
 

@@ -33,12 +33,14 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
     """
 
     refused_url: List[Tuple[str, str]] = list()
+    unused_drugs = list(drug_list)
 
+    i = 0
     record_list: List[dict] = list()
     for root, _, dir_files in os.walk(source_page_dir):
+        n = len(dir_files)
         for file in tqdm(dir_files, desc='Parsing html files', ncols=100, disable=disable_tqdm):
             if not str(file).startswith("~$") and (str(file).endswith(".html")):
-
                 path = os.path.abspath(os.path.join(root, file))
                 file_obj = codecs.open(path, encoding="utf-8")
                 page_source = file_obj.read()
@@ -51,11 +53,16 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
                 product_name = soup.find(CUSTOM_PRODUCT_NAME_TAG).text
                 url = soup.find(CUSTOM_URL_TAG).text
 
-                if disable_tqdm:
-                    print("="*120)
-                    print(f"Parsing product_name:'{product_name}'...\nurl:'{url}'\n")
                 if drug not in drug_list:
                     continue
+
+                if drug in unused_drugs:
+                    unused_drugs.remove(drug)
+
+                if disable_tqdm:
+                    i += 1
+                    print("="*120)
+                    print(f"[{i}==>{n}] Parsing product_name:'{product_name}'...\nurl:'{url}'\n")
 
                 text = ''
                 # "Особливості застосування
@@ -92,7 +99,7 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
                     print(f"\tsuccessfully")
 
     df = pd.DataFrame(record_list)
-    return df, refused_url
+    return df, refused_url, unused_drugs
 
 
 def _parse_page(chapters: bs4.element.ResultSet) -> List[DataPage]:
@@ -123,5 +130,14 @@ if __name__ == "__main__":
     # print(*drug_list, sep="\n")
     print(f"{len(DRUG_LIST)=}")
 
-    df_, refused_url_ = parse_pages(SOURCE_HTML_DIR, DRUG_LIST, True)
-    pprint(df_.to_dict())
+    df_, refused_url_, unused_drugs_ = parse_pages(SOURCE_HTML_DIR, DRUG_LIST)
+    # print("Refused urls:")
+    # pprint(df_.to_dict())
+    # print("="*120)
+
+    print("Refused urls:")
+    pprint(refused_url_)
+    print("=" * 120)
+
+    print("Unused drugs:")
+    pprint(unused_drugs_)
