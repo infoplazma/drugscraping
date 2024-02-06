@@ -31,6 +31,9 @@ EXCEL_DATA_DIR = os.path.join(DATA_DIR, 'excel_target')
 TEMP_DATA_DIR = os.path.join(DATA_DIR, 'temp')
 STATISTICS_DATA_DIR = os.path.join(DATA_DIR, 'statistics')
 
+# Папка со списком дополнительных препаратов one drive
+ONE_DRIVE_DIR = os.path.join(DATA_DIR, 'one_drive')
+
 # Файл с перечнем имен препаратов для скрапинга и парсинга
 TASK_FILE_PATH = os.path.join(TASK_DIR, 'task.txt')
 # Файл для хранения и загрузки списка подстановок выражений форм выпуска препаратов,

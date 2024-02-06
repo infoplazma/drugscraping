@@ -21,7 +21,7 @@ python3.10 -m venv venv
 
 _Активировать виртуальное окружение_
 ```commandline
-venv/Scripts/activate
+.\venv\Scripts\activate
 ```
 
 _Установка зависимостей_
