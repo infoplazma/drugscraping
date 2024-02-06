@@ -20,7 +20,10 @@ from tqdm import tqdm
 DataPage = namedtuple('DataPage', ['header', 'content'])
 
 
-def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) -> Tuple[pd.DataFrame, List[Tuple[str, str]]]:
+def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) -> Tuple[
+                                                                pd.DataFrame, List[Tuple[str, str, str]], List[str]
+]:
+
     """
 
     :param source_page_dir:

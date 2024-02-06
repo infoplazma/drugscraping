@@ -9,3 +9,4 @@ log/*
 #/task/*.xlsx
 *.xlsx
 /temp/
+/apteka911/html_source/
