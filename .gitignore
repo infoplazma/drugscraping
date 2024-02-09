@@ -10,3 +10,4 @@ log/*
 *.xlsx
 /temp/
 /apteka911/data/
+.env

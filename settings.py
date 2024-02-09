@@ -2,7 +2,13 @@
 import os
 from enum import Enum
 
+from dotenv import load_dotenv
+
 from configs.init_conf import REQUIRED_COLUMN_NAMES, CONTENT_COLUMN
+
+
+load_dotenv()
+API_URL = os.getenv("API_URL")
 
 
 # Ключи доменов
