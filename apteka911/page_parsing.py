@@ -2,22 +2,19 @@
 Парсинг html файлов дял домена likiteka
 """
 import os
-import re
 from typing import Tuple, List, Dict
-from collections import namedtuple
 
-from settings import CUSTOM_DRUG_TAG, CUSTOM_URL_TAG, CUSTOM_PRODUCT_NAME_TAG
+from settings import APTEKA911, CUSTOM_DRUG_TAG, CUSTOM_URL_TAG, CUSTOM_PRODUCT_NAME_TAG
 
 import codecs
 import pandas as pd
 from lxml import etree
-import bs4
 from bs4 import BeautifulSoup
 
 from tqdm import tqdm
 
-
-DataPage = namedtuple('DataPage', ['header', 'content'])
+SOURCE_HTML_DIR = os.path.join(APTEKA911, "data", "html_source")
+PARSED_DATA_PATH = os.path.join(APTEKA911, "data", "parsed_data.csv")
 
 
 def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) -> Tuple[
@@ -44,6 +41,7 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
         n = len(dir_files)
         for file in tqdm(dir_files, desc='Parsing html files', ncols=100, disable=disable_tqdm):
             if not str(file).startswith("~$") and (str(file).endswith(".html")):
+                i += 1
                 path = os.path.abspath(os.path.join(root, file))
                 file_obj = codecs.open(path, encoding="utf-8")
                 page_source = file_obj.read()
@@ -57,32 +55,28 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
                 url = soup.find(CUSTOM_URL_TAG).text
 
                 if drug not in drug_list:
+                    if disable_tqdm:
+                        print(f"'{drug}' не найден в drug_list")
                     continue
 
                 if drug in unused_drugs:
                     unused_drugs.remove(drug)
 
                 if disable_tqdm:
-                    i += 1
                     print("="*120)
                     print(f"[{i}==>{n}] Parsing product_name:'{product_name}'...\nurl:'{url}'\n")
 
                 text = ''
-                # "Особливості застосування
-                if h1_header := dom.xpath('//*/div[@class="collapsible-heading open-block"]/h2[contains(text(), "Особливості застосування")]'):
-                    # print(f"\n{h1_header[0].text}:")
-                    parent = h1_header[0].xpath('../following-sibling::div')
-                    text += h1_header[0].text + ': ' + ' '.join(parent[0].itertext()).strip() + "\r\n\n"
-
-                if h1_header := dom.xpath('//*/div[@class="collapsible-heading open-block"]/h2[contains(text(), "Спосіб застосування")]'):
-                    # print(f"\n{h1_header[0].text}:")
-                    parent = h1_header[0].xpath('../following-sibling::div')
-                    text += h1_header[0].text + ': ' + ' '.join(parent[0].itertext()).strip()
+                for use_method in ["Особливості застосування", "Спосіб застосування", "Застосування", "Рекомендації щодо застосування", "Спосіб застосування та дози"]:
+                    if h1_header := dom.xpath(f'//*/div[@class="collapsible-heading open-block"]/h2[contains(text(), "{use_method}")]'):
+                        # print(f"\n{h1_header[0].text}:")
+                        parent = h1_header[0].xpath('../following-sibling::div')
+                        text += h1_header[0].text + ': ' + ' '.join(parent[0].itertext()).strip() + "\r\n\n"
 
                 if not text:
                     if disable_tqdm:
                         print(f"not found in url:'{url}'\n")
-                    refused_url.append((drug, url, "Не найдено 'Особливості застосування' или 'Спосіб застосування'"))
+                    refused_url.append((drug, url, "Не найдено 'Особливості застосування' или 'Спосіб застосування' или 'Застосування' или 'Рекомендації щодо застосування' или 'Спосіб застосування та дози'"))
                     continue
 
                 if for_children_div := dom.xpath('//*/div[@class="block-lights__title"][contains(text(), "Дітям")]/following-sibling::div'):
@@ -105,35 +99,20 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
     return df, refused_url, unused_drugs
 
 
-def _parse_page(chapters: bs4.element.ResultSet) -> List[DataPage]:
-    data_list: List[DataPage] = list()
-    for chapter in chapters:
-        header = _format_text(chapter.find_next('h2').text.replace(chapter.find_next('span').text, ''))
-        content = _format_text(chapter.find_next('div', attrs={'class': 'tablets-tabs__box'}).text)
-        data_list.append(DataPage(header, content))
-
-    return data_list
-
-
-def _format_text(text: str) -> str:
-    if isinstance(text, str):
-        text = re.sub(r'\s+', ' ', text)
-        text = text.replace("\xa0", " ").strip()
-    return text
-
-
 if __name__ == "__main__":
     from pprint import pprint
     import settings
-    from data_preparing.excel_transformer import transform_to_df
+    from apteka911.service_utilities.one_drive_txt_file_to_df import transform_to_df
 
-    SOURCE_HTML_DIR = "./html_source"
     df_ = transform_to_df(settings.ONE_DRIVE_DIR)
     DRUG_LIST = sorted(df_["drug"].unique())
+
+    # DRUG_LIST = ["Преднізолон-Дарниця таблетки по 5 мг №40 (10х4)", "Назірус Синус капсули по 370 мг №30 (10х3)"]
     # print(*drug_list, sep="\n")
     print(f"{len(DRUG_LIST)=}")
 
     df_, refused_url_, unused_drugs_ = parse_pages(SOURCE_HTML_DIR, DRUG_LIST)
+    df_.to_csv(PARSED_DATA_PATH, index=False)
     # print("Refused urls:")
     # pprint(df_.to_dict())
     # print("="*120)
@@ -144,3 +123,6 @@ if __name__ == "__main__":
 
     print("Unused drugs:")
     pprint(unused_drugs_)
+
+"""
+"""

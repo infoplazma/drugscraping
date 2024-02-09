@@ -24,9 +24,10 @@ LOG_DIR = os.path.join(BASE_DIR, 'log')
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 TASK_DIR = os.path.join(BASE_DIR, 'tasks')
 CONFIGS_DIR = os.path.join(BASE_DIR, 'configs')
+APTEKA911 = os.path.join(BASE_DIR, 'apteka911')
 
 # Индивидуальные папки для каждого домена внутри папки DATA_DIR
-HTML_DATA_DIR = os.path.join(DATA_DIR, 'html_source')
+HTML_DATA_DIR = os.path.join(DATA_DIR, 'html_source_arch')
 EXCEL_DATA_DIR = os.path.join(DATA_DIR, 'excel_target')
 TEMP_DATA_DIR = os.path.join(DATA_DIR, 'temp')
 STATISTICS_DATA_DIR = os.path.join(DATA_DIR, 'statistics')

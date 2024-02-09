@@ -7,7 +7,12 @@ import hashlib
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 
+from settings import APTEKA911
 from core.utilities import add_tail
+
+
+DOMAIN_URL = r"https://apteka911.ua/ua"
+SOURCE_HTML_DIR = os.path.join(APTEKA911, "data", "html_source")
 
 
 def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) -> List[Tuple[str, str]]:
@@ -23,7 +28,7 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
     refused_url: List[Tuple[str, str]] = list()
 
     if not os.path.isdir(source_page_dir):
-        os.mkdir(source_page_dir)
+        os.makedirs(source_page_dir, exist_ok=True)
 
     driver = uc.Chrome()
     driver.maximize_window()
@@ -60,10 +65,19 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
         a_elements = [element.find_element(By.XPATH, ".//*/p[@class='prod__header']/a") for element in preparations_elements]
         # print(*a_elements, sep="\n")
         urls = [element.get_attribute("href") for element in a_elements if element]
-        # print(*urls, sep="\n")
+        # print(f"{urls=}", sep="\n")
+        # print(f"{driver.current_url=}", sep="\n")
+
+        if not urls and re.search(r"/([\w-]+-d\d+)$", driver.current_url):
+            urls = [driver.current_url]
+
+        if not urls:
+            pprint("Не найден ни один подходящий url")
+            refused_url.append((drug, driver.current_url, "Не найден ни один подходящий url"))
+            continue
 
         for url in urls:
-            match = re.search(r"/([\w-]+-p\d+)$", url)
+            match = re.search(r"(/([\w-]+-d\d+)$)|(/([\w-]+-p\d+)$)", url)
             if match:
                 driver.get(url)
                 time.sleep(3)
@@ -71,11 +85,14 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
 
                 if product_name := driver.find_elements(By.XPATH, "//*/div[@class='product-head-instr tl']/h1"):
                     product_name = product_name[0].text
+                elif product_name := driver.find_elements(By.XPATH, "//*/section[@class='wrp-content content-right']/h1"):
+                    product_name = product_name[0].text
+                    # print(f"{product_name=}")
                 else:
                     product_name = match.group(1)
 
                 html_content = driver.page_source + add_tail(drug, product_name, url)
-                hashed_data = hashlib.sha1(html_content.encode())
+                hashed_data = hashlib.md5((drug+product_name+url).encode())
                 hashed_filename = hashed_data.hexdigest() + ".html"
 
                 path = os.path.abspath(os.path.join(source_page_dir, hashed_filename))
@@ -93,17 +110,26 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
 
 if __name__ == "__main__":
     import settings
-    from data_preparing.excel_transformer import transform_to_df
+    from apteka911.service_utilities.one_drive_txt_file_to_df import transform_to_df
+    from apteka911.data.refused_urls_unused_drugs import PARSING_UNUSED_DRUGS
 
-    DOMAIN_URL = r"https://apteka911.ua/ua"
-    SOURCE_HTML_DIR = "./html_source"
-    START_DRUG = "Синекод краплі ор. д/діт. 5 мг/мл по 20 мл у флак."
+    # START_DRUG = "Синекод краплі ор. д/діт. 5 мг/мл по 20 мл у флак."
 
-    df = transform_to_df(settings.ONE_DRIVE_DIR)
-    DRUG_LIST = sorted(df["drug"].unique())
-    index = DRUG_LIST.index(START_DRUG)
-    DRUG_LIST = DRUG_LIST[index:]
-    print(f"{index=}  {DRUG_LIST[0]=}")
+    # df = transform_to_df(settings.ONE_DRIVE_DIR)
+    # DRUG_LIST = sorted(df["drug"].unique())
+    # index = DRUG_LIST.index(START_DRUG)
+    # DRUG_LIST = DRUG_LIST[index:]
+    # print(f"{index=}  {DRUG_LIST[0]=}")
+
+    # SOURCE_HTML_DIR = "./data/html_source_test"
+    # DRUG_LIST = ["Азитро Сандоз пор. д/п сусп",
+    #              # "Окомістин  - розчин",
+    #              # "Цедоксим порошок для оральної суспензії 40 мг/5 мл флакон 100 мл 1 шт",
+    #              # "Цефодокс таблетки вкриті плівковою оболонкою по 100 мг блістер 10 шт",
+    #     # 'Суспрін розчин д/ор. заст. 4 мг/5 мл по 50 мл у флак', "Ефералган для дітей"
+    #              ]
+    DRUG_LIST = PARSING_UNUSED_DRUGS
+
     # print(*drug_list, sep="\n")
     print(f"{len(DRUG_LIST)=}")
 
