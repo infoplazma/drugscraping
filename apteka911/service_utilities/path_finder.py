@@ -1,10 +1,15 @@
+"""
+Осуществляет поиск и замену при REPLACE = True в settings.ONE_DRIVE_DIR
+"""
 import os
 import settings
 from pprint import pprint
 
-REPLACE = True
+# Строка поиска
+search_text = "Септолете тотал лимон та мед льодяники по 3 мг/1 мг №16 (8х2)"
 
-text = "Септолете тотал лимон та мед льодяники по 3 мг/1 мг №16 (8х2)"
+# Флаг и словарь для замены, при флаге REPLACE = False проводит поиск по ключам в словаре без замен
+REPLACE = False
 replacer_dict = {
     # 'АзитроСандоз - Порошок для оральної суспензії.': 'Азитро Сандоз пор. д/п сусп',
     # 'Окомістин  - розчин': 'Окомістин  - розчин',
@@ -32,8 +37,8 @@ for root, _, dir_files in os.walk(settings.ONE_DRIVE_DIR):
 
             # pprint(page_source)
             # print("="*120)
-            if text in page_source:
-                print(f"{text} found in {file}")
+            if search_text in page_source:
+                print(f"{search_text} found in {file}")
 
             mod = False
             for _old, _new in replacer_dict.items():

@@ -15,14 +15,14 @@ DOMAIN_URL = r"https://apteka911.ua/ua"
 SOURCE_HTML_DIR = os.path.join(APTEKA911, "data", "html_source")
 
 
-def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) -> List[Tuple[str, str]]:
+def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) -> List[Tuple[str, str, str]]:
     """
 
-    :param domain_url:
-    :param source_page_dir:
+    :param domain_url: домейн для скрепинга
+    :param source_page_dir: где будут сохранены html файлы
     :param drug_list:  - список препаратов для скрапинга
 
-    return: list of refused_url in format list[(drug, url, message)]
+    return: list of refused_url in format list[(drug, url, message)] - несоскрепленные препараты
     """
 
     refused_url: List[Tuple[str, str]] = list()
@@ -55,8 +55,8 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
 
         if not_found := driver.find_elements(By.XPATH, '//*/section/div/div/h1[@class="mb30"]'):
             # print("Швидкий пошук не дав результатів" in not_found[0].text)
-            pprint(not_found[0].text)
-            refused_url.append((drug, domain_url, not_found[0].text))
+            pprint(not_found[0].search_text)
+            refused_url.append((drug, domain_url, not_found[0].search_text))
             continue
 
         # New page
@@ -84,9 +84,9 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
                 driver.implicitly_wait(3)
 
                 if product_name := driver.find_elements(By.XPATH, "//*/div[@class='product-head-instr tl']/h1"):
-                    product_name = product_name[0].text
+                    product_name = product_name[0].search_text
                 elif product_name := driver.find_elements(By.XPATH, "//*/section[@class='wrp-content content-right']/h1"):
-                    product_name = product_name[0].text
+                    product_name = product_name[0].search_text
                     # print(f"{product_name=}")
                 else:
                     product_name = match.group(1)

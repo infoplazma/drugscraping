@@ -116,8 +116,8 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
 def _parse_page(chapters: bs4.element.ResultSet) -> List[DataPage]:
     data_list: List[DataPage] = list()
     for chapter in chapters:
-        header = _format_text(chapter.find_next('h2').text.replace(chapter.find_next('span').text, ''))
-        content = _format_text(chapter.find_next('div', attrs={'class': 'tablets-tabs__box'}).text)
+        header = _format_text(chapter.find_next('h2').search_text.replace(chapter.find_next('span').search_text, ''))
+        content = _format_text(chapter.find_next('div', attrs={'class': 'tablets-tabs__box'}).search_text)
         data_list.append(DataPage(header, content))
 
     return data_list

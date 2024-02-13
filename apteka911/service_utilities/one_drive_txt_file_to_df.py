@@ -1,3 +1,7 @@
+"""
+Трансформирует из папки settings.ONE_DRIVE_DIR файлы в таблицу pd.DataFrame с колонками
+"diagnosis", "symptom", "sub_symptom", "drug", "release_form"
+"""
 from typing import Tuple, List, Dict
 import re
 from pathlib import Path
@@ -12,6 +16,10 @@ RELEASE_FORMS = "Краплі+очні Краплі+вушні Краплі+на
 
 
 def transform_to_df(path_dir: str) -> pd.DataFrame:
+    """
+    Трансформирует из папки settings.ONE_DRIVE_DIR файлы в таблицу с колонками
+    "diagnosis", "symptom", "sub_symptom", "drug", "release_form"
+    """
     contents = read_contents(path_dir)
     contents = separate(contents)
     return to_df(contents)
@@ -69,6 +77,7 @@ def get_release_form(sentence: str, patterns: List[str]) -> str | None:
 if __name__ == "__main__":
     from pprint import pprint
 
+    # pprint(separate(read_contents(settings.ONE_DRIVE_DIR)))
     df = transform_to_df(settings.ONE_DRIVE_DIR)
     drug_list = sorted(df["drug"].unique())
     # print(*drug_list, sep="\n")
