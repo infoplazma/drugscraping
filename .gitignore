@@ -11,3 +11,4 @@ log/*
 /temp/
 /apteka911/data/
 .env
+.*

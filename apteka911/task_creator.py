@@ -1,5 +1,5 @@
 """
-После парсинга создает DataFrame для загрузки на сайт
+После парсинга создает DataFrames для загрузки на сайт
 """
 import os
 from typing import Tuple, List, Dict
@@ -9,7 +9,7 @@ import settings
 from core.utilities import DFS_TYPE, read_excel, dfs_to_excel
 
 
-TASK_DFS_PATH = os.path.join(settings.APTEKA911, "data", "drugs.xlsx")
+TASK_DFS_PATH = os.path.join(settings.APTEKA911, "data", "api_drugs.xlsx")
 
 
 def create_task_dfs(task_df: pd.DataFrame, parsed_drugs_df: pd.DataFrame, symptoms_dfs: DFS_TYPE) -> DFS_TYPE:

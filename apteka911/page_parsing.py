@@ -1,8 +1,9 @@
 """
-Парсинг html файлов дял домена likiteka
+Парсинг html файлов дял домена apteka911
 """
 import os
 from typing import Tuple, List, Dict
+from io import StringIO
 
 from settings import APTEKA911, CUSTOM_DRUG_TAG, CUSTOM_URL_TAG, CUSTOM_PRODUCT_NAME_TAG
 
@@ -70,26 +71,36 @@ def parse_pages(source_page_dir: str, drug_list: List[str], disable_tqdm=False) 
                     print(f"[{i}==>{n}] Parsing product_name:'{product_name}'...\nurl:'{url}'\n")
 
                 text = ''
-                for use_method in ["Особливості застосування", "Спосіб застосування", "Застосування", "Рекомендації щодо застосування", "Спосіб застосування та дози"]:
+                for use_method in ["Особливості застосування",
+                                   "Спосіб застосування",
+                                   "Застосування",
+                                   "Рекомендації щодо застосування",
+                                   "Спосіб застосування та дози",
+                                   "Показання до застосування"]:
                     if h1_header := dom.xpath(f'//*/div[@class="collapsible-heading open-block"]/h2[contains(text(), "{use_method}")]'):
                         # print(f"\n{h1_header[0].text}:")
                         parent = h1_header[0].xpath('../following-sibling::div')
-                        text += h1_header[0].search_text + ': ' + ' '.join(parent[0].itertext()).strip() + "\r\n\n"
+                        text += h1_header[0].text + ': ' + ' '.join(parent[0].itertext()).strip() + "\r\n\n"
 
                 if not text:
                     if disable_tqdm:
                         print(f"not found in url:'{url}'\n")
-                    refused_url.append((drug, url, "Не найдено 'Особливості застосування' или 'Спосіб застосування' или 'Застосування' или 'Рекомендації щодо застосування' или 'Спосіб застосування та дози'"))
+                    refused_url.append((drug, url, "Не найдено 'Особливості застосування' или "
+                                                   "'Спосіб застосування' или 'Застосування' или "
+                                                   "'Рекомендації щодо застосування' или "
+                                                   "'Спосіб застосування та дози' или "
+                                                   "'Показання до застосування'"))
                     continue
 
                 if for_children_div := dom.xpath('//*/div[@class="block-lights__title"][contains(text(), "Дітям")]/following-sibling::div'):
-                    text = "Дітям:" + for_children_div[0].search_text + "\r\n" + text
+                    text = "Дітям:" + for_children_div[0].text + "\r\n" + text
 
                 # print(text, "\n")
                 record = {"drug": drug, "product_name": product_name, "text": text, "url": url}
 
                 if parameter_table := soup.find('table', attrs={'class': 'product-parameters product-parameters--card'}):
-                    df_parameters = pd.read_html(str(parameter_table))
+                    value = StringIO(str(parameter_table))
+                    df_parameters = pd.read_html(value)
                     parameters: Dict[str, str] = {param[0]: param[1] for param in df_parameters[0].values.tolist()}
                     record.update(parameters)
                     # print(f"{parameters}\n")

@@ -31,6 +31,7 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 TASK_DIR = os.path.join(BASE_DIR, 'tasks')
 CONFIGS_DIR = os.path.join(BASE_DIR, 'configs')
 APTEKA911 = os.path.join(BASE_DIR, 'apteka911')
+BACKUP_DIR = os.path.join(BASE_DIR, 'backup')
 
 # Индивидуальные папки для каждого домена внутри папки DATA_DIR
 HTML_DATA_DIR = os.path.join(DATA_DIR, 'html_source_arch')

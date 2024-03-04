@@ -59,6 +59,17 @@ def make_dir_in_log_dir(dir_name: str) -> str:
     return dir_path
 
 
+def mkdir(path: str, message: str = '') -> bool:
+    if not os.path.isdir(path):
+        try:
+            os.mkdir(path)
+            return True
+        except OSError as error:
+            print(message, error)
+            return False
+    return True
+
+
 def dfs_to_excel(path: str, dfs: Dict[str, pd.DataFrame], highlighted_columns: Tuple[str] = None, massage: str = None):
     if isinstance(dfs, pd.DataFrame):
         dfs: Dict[str, pd.DataFrame] = {"Sheet1": dfs}

@@ -1,3 +1,9 @@
+### Apteka911
+
+* apteka911/page_scraping.py - скрэпинг сайта
+* apteka911/page_parsing.py - парсинг соскрэпленных страниц
+* apteka911/task_creator.py - создание excel файла для загрузки препаратов в базу
+
 ### GIT
 
 ```shell

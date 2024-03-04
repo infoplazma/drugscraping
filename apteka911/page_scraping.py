@@ -15,12 +15,16 @@ DOMAIN_URL = r"https://apteka911.ua/ua"
 SOURCE_HTML_DIR = os.path.join(APTEKA911, "data", "html_source")
 
 
-def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) -> List[Tuple[str, str, str]]:
+def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str], version_main=121) -> \
+        List[Tuple[str, str, str]]:
     """
+    undetected-chromedriver==3.5.3
+    selenium==4.8.0
 
     :param domain_url: домейн для скрепинга
     :param source_page_dir: где будут сохранены html файлы
     :param drug_list:  - список препаратов для скрапинга
+    :param version_main - версия Chrome driver
 
     return: list of refused_url in format list[(drug, url, message)] - несоскрепленные препараты
     """
@@ -30,7 +34,7 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
     if not os.path.isdir(source_page_dir):
         os.makedirs(source_page_dir, exist_ok=True)
 
-    driver = uc.Chrome()
+    driver = uc.Chrome(version_main=version_main)
     driver.maximize_window()
 
     for drug in drug_list:
@@ -55,8 +59,8 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
 
         if not_found := driver.find_elements(By.XPATH, '//*/section/div/div/h1[@class="mb30"]'):
             # print("Швидкий пошук не дав результатів" in not_found[0].text)
-            pprint(not_found[0].search_text)
-            refused_url.append((drug, domain_url, not_found[0].search_text))
+            pprint(not_found[0].text)
+            refused_url.append((drug, domain_url, not_found[0].text))
             continue
 
         # New page
@@ -84,9 +88,9 @@ def scrape_pages(domain_url: str, source_page_dir: str, drug_list: List[str]) ->
                 driver.implicitly_wait(3)
 
                 if product_name := driver.find_elements(By.XPATH, "//*/div[@class='product-head-instr tl']/h1"):
-                    product_name = product_name[0].search_text
+                    product_name = product_name[0].text
                 elif product_name := driver.find_elements(By.XPATH, "//*/section[@class='wrp-content content-right']/h1"):
-                    product_name = product_name[0].search_text
+                    product_name = product_name[0].text
                     # print(f"{product_name=}")
                 else:
                     product_name = match.group(1)
