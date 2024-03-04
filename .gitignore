@@ -12,3 +12,4 @@ log/*
 /apteka911/data/
 .env
 .*
+/backup/
